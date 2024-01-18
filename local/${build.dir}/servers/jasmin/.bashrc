@@ -27,3 +27,6 @@ alias sqldev='mysql --user=toba3789_root --password'
 export PATH=$PATH:/opt/alt/alt-nodejs16/root/usr/bin/
 export DEV=~/DEV/bomerle
 export PROD=~/PROD/bomerle
+
+
+
