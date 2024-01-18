@@ -17,6 +17,7 @@
         <echo message="-----> .......... restore-images : restore images in local symfony "/>
         <echo message=""/>
         <echo message="-----> .......... get-jasmin-dev-images : get images from jasmin dev "/>
+        <echo message="-----> .......... get-jasmin-dev-db : get a DB backup from jasmin dev "/>
         <echo message="----->"/>
         <echo message="-----> .......... push-jasmin-procs : push shell procs on jasmin"/>
         <echo message="----->"/>
@@ -25,7 +26,7 @@
         <echo message=""/>
     </target>
     <!--  =====================================================================================  -->
-    <!--  Hosts work -->
+    <!--  LOCAL AND REMOTE TASKS  -->
     <!--  =====================================================================================  -->
     <!-- COPY .bashrc LOCALLY AND PERFORM CR/LF TRANSFORMATION  -->
     <target name="localbashrc">
@@ -64,7 +65,7 @@
                     verbose="false"
                     command="chmod +x ${jasmin.procdir}/*.sh;cp ${jasmin.procdir}/.bashrc $HOME" />
     </target>
-    <!-- BACKUP & GET IMAGES ON JASMIN  -->
+    <!-- BACKUP & GET IMAGES FROM JASMIN  -->
     <target name="get-jasmin-dev-images" depends="cleanup, servercleanup">
         <echo/>
         <echo message="Zip site images"/>
@@ -78,6 +79,28 @@
         <antcall target="getzip">
             <param name="targetenv" value="DEVEL"/>
         </antcall>
+    </target>
+    <!-- BACKUP & GET DEV DB FROM JASMIN  -->
+    <target name="get-jasmin-dev-db" depends="cleanup">
+        <echo/>
+        <echo message="get a DB backup from jasmin dev"/>
+        <echo/>
+        <sshexec    host="${jasminserver}"
+                    username="${jasminuser}" 
+                    password="${jasminpass}"                    
+                    command="mysqldump -u ${bomerle.dbuser} --password=${bomerle.dbpass} ${bomerle.db} --result-file=${jasmin.workdir}/toba3789_DEVbomerle.sql"
+                    trust="true" 
+                    verbose="${verbosemode}"/>
+        <scp file="${jasminuser}:${jasminpass}@${jasminserver}:${jasmin.workdir}/toba3789_DEVbomerle.sql" 
+                    trust="true" todir="${save.dir}"/>
+    </target>
+    <!-- RESTORE ZIPPED IMAGES ON LOCAL WEB APP  -->
+    <target name="restore-images" depends="cleanup">
+        <echo/>
+        <echo message="Restore site images from ${save.dir}"/>
+        <unzip src="${save.dir}/DEVEL-webp-gif-svg.zip" dest="${bomerlepublic.dir}" />
+        <unzip src="${save.dir}/DEVEL-some-jpg-jpeg.zip" dest="${bomerlepublic.dir}" />
+        <echo/>
     </target>
     <!-- ZIP FILES TRANSFER  -->
     <target name="getzip">
@@ -104,7 +127,7 @@
                     command="ls -al" />
     </target>
     <!--  =====================================================================================  -->
-    <!--  Generic task  -->
+    <!--  GENERIC TASKS  -->
     <!--  =====================================================================================  -->
     <!-- CLEANUP THE BUILD FOLDER  -->
     <target name="cleanup" depends="dir.check" if="dir.exists">
