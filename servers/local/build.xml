@@ -13,8 +13,9 @@
     <target name="help" description="What's in this build file">
         <echo message="-----> Available targets "/>
         <echo message=""/>
-        <echo message="-----> .......... prodjasmin : jasmin prod, get images"/>
-        <echo message="-----> .......... backupjasmindev : get images from jasmin dev "/>
+        <echo message="-----> .......... localbashrc: Push local .bashrc"/>
+        <echo message="----->"/>
+        <echo message="-----> .......... get-jasmin-dev-images : get images from jasmin dev "/>
         <echo message="-----> .......... sshjasmin : test ssh jasmin"/>
         <echo message="-----> .......... cleanup : Shoot all previous local build files"/>
         <echo message=""/>
@@ -23,7 +24,16 @@
     <!--  Hosts work -->
     <!--  =====================================================================================  -->
     <!-- BACKUP & GET IMAGES ON JASMIN  -->
-    <target name="backupjasmindev" depends="cleanup, servercleanup">
+    <target name="localbashrc">
+        <copy todir="${home.dir}" verbose="${copy.verbosemode}">
+            <fileset dir="${src.dir}" casesensitive="true">
+                <include name="**/.bashrc"/>
+            </fileset>
+        </copy>
+        <fixcrlf srcdir="${home.dir}" includes="**/.bashrc" eol="lf" eof="remove"/>
+    </target>
+    <!-- BACKUP & GET IMAGES ON JASMIN  -->
+    <target name="get-jasmin-dev-images" depends="cleanup, servercleanup">
         <echo/>
         <echo message="Zip site images"/>
         <echo/>
