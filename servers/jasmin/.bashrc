@@ -21,8 +21,8 @@ alias lal='ls -al'
 alias lrtl='ls -rtl'
 alias hh='history | grep -i '
 alias symfony='php bin/console'
-alias sqldev='mysql --user=toba3789_root --password'
-
+alias sqldev='mysql --user=toba3789_root --password=Manager1+root@3789 toba3789_DEVbomerle'
+alias sqlprod='mysql --user=toba3789_root --password=Manager1+root@3789 toba3789_PRODbomerle'
 #export PATH=$PATH:$HOME/.symfony5/bin/:/opt/alt/alt-nodejs16/root/usr/bin/
 export PATH=$PATH:/opt/alt/alt-nodejs16/root/usr/bin/
 export DEV=~/DEV/bomerle
