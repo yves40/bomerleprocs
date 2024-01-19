@@ -20,12 +20,14 @@
         <echo message=""/>
         <echo message="J A S M I N "/>
         <echo message=""/>
-        <echo message="-----> .......... get-jasmin-dev-images : get images from jasmin dev "/>
-        <echo message="-----> .......... get-jasmin-dev-db : get a DB backup from jasmin dev "/>
-        <echo message="-----> .......... put-jasmin-procs : push shell procs on jasmin"/>
+        <echo message="-----> .......... get-dev-images : Get images from jasmin dev "/>
+        <echo message="-----> .......... get-dev-db : Get a DB backup from jasmin dev "/>
+        <echo message="-----> .......... put-procs : Push shell procs on jasmin"/>
+        <echo message="-----> .......... restore-images-toprod : Unzip archive image files to PROD"/>
         <echo message="----->"/>
         <echo message="-----> .......... sshjasmin : test ssh jasmin"/>
         <echo message="-----> .......... cleanup : Shoot all previous local build files"/>
+        <echo message="-----> .......... servercleanup : Shoot all previous build files on server"/>
         <echo message=""/>
     </target>
     <!--  =====================================================================================  -->
@@ -44,7 +46,7 @@
         <fixcrlf srcdir="${home.dir}" includes="**/.bashrc" eol="lf" eof="remove"/>
     </target>
     <!-- COPY SHELL PROCS ON JASMIN  -->
-    <target name="put-jasmin-procs" depends="cleanup">
+    <target name="put-procs" depends="cleanup">
         <echo/>
         <echo message="Update jasmin procs"/>
         <echo/>
@@ -69,11 +71,11 @@
                     command="chmod +x ${jasmin.procdir}/*.sh;cp ${jasmin.procdir}/.bashrc $HOME" />
     </target>
     <!-- BACKUP & GET IMAGES FROM JASMIN  -->
-    <target name="get-jasmin-dev-images" depends="cleanup, servercleanup">
+    <target name="get-dev-images" depends="cleanup">
         <echo/>
         <echo message="Zip site images"/>
         <echo/>
-        <sshexec    command="${jasmin.procdir}/save-dev-images.sh;ls -l ${jasmin.workdir};du -kh ${jasmin.workdir};df -kh" 
+        <sshexec    command="${jasmin.procdir}/save-dev-images.sh;ls -l ${jasmin.backupdir};du -kh ${jasmin.backupdir};df -kh" 
                     host="${jasminserver}"
                     username="${jasminuser}" 
                     password="${jasminpass}"                    
@@ -83,18 +85,36 @@
             <param name="targetenv" value="DEVEL"/>
         </antcall>
     </target>
+    <!-- RESTORE IMAGES ARCHIVES TO THE PROD ENVIRONMENT  -->
+    <target name="restore-images-toprod">
+        <echo/>
+        <echo message="Restore images archives to PROD"/>
+        <echo/>
+        <sshexec    command="unzip -o ${jasmin.backupdir}/some-jpg-jpeg.zip -d ${jasmin.prodpublic}" 
+                    host="${jasminserver}"
+                    username="${jasminuser}" 
+                    password="${jasminpass}"                    
+                    trust="true" 
+                    verbose="${zip.verbosemode}"/>
+        <sshexec    command="unzip -o ${jasmin.backupdir}/webp-gif-svg.zip -d ${jasmin.prodpublic}" 
+                    host="${jasminserver}"
+                    username="${jasminuser}" 
+                    password="${jasminpass}"                    
+                    trust="true" 
+                    verbose="${zip.verbosemode}"/>
+    </target>
     <!-- BACKUP & GET DEV DB FROM JASMIN  -->
-    <target name="get-jasmin-dev-db" depends="cleanup">
+    <target name="get-dev-db" depends="cleanup">
         <echo/>
         <echo message="get a DB backup from jasmin dev"/>
         <echo/>
         <sshexec    host="${jasminserver}"
                     username="${jasminuser}" 
                     password="${jasminpass}"                    
-                    command="mysqldump -u ${bomerle.dbuser} --password=${bomerle.dbpass} ${bomerle.db} --result-file=${jasmin.workdir}/toba3789_DEVbomerle.sql"
+                    command="mysqldump -u ${bomerle.dbuser} --password=${bomerle.dbpass} ${bomerle.db} --result-file=${jasmin.backupdir}/toba3789_DEVbomerle.sql"
                     trust="true" 
                     verbose="${verbosemode}"/>
-        <scp file="${jasminuser}:${jasminpass}@${jasminserver}:${jasmin.workdir}/toba3789_DEVbomerle.sql" 
+        <scp file="${jasminuser}:${jasminpass}@${jasminserver}:${jasmin.backupdir}/toba3789_DEVbomerle.sql" 
                     trust="true" todir="${save.dir}"/>
     </target>
     <!-- RESTORE ZIPPED IMAGES ON LOCAL WEB APP  -->
@@ -110,15 +130,15 @@
         <echo/>
         <echo message="Get the zip files locally for ${targetenv} environment"/>
         <echo/>
-        <scp file="${jasminuser}:${jasminpass}@${jasminserver}:${jasmin.workdir}/webp-gif-svg.zip" 
+        <scp file="${jasminuser}:${jasminpass}@${jasminserver}:${jasmin.backupdir}/webp-gif-svg.zip" 
                     trust="true" todir="${save.dir}"/>
-        <scp file="${jasminuser}:${jasminpass}@${jasminserver}:${jasmin.workdir}/some-jpg-jpeg.zip" 
+        <scp file="${jasminuser}:${jasminpass}@${jasminserver}:${jasmin.backupdir}/some-jpg-jpeg.zip" 
                     trust="true" todir="${save.dir}"/>
         <move file="${save.dir}/webp-gif-svg.zip" tofile="${save.dir}/${targetenv}-webp-gif-svg.zip"/>
         <move file="${save.dir}/some-jpg-jpeg.zip" tofile="${save.dir}/${targetenv}-some-jpg-jpeg.zip"/>
     </target>
     <!-- CHECK SSH CONNECTIVITY ON JASMIN  -->
-    <target name="sshjasmin" depends="cleanup, servercleanup">
+    <target name="sshjasmin">
         <echo message="-----> Check ssh connectivity: ${jasminuser}@${jasminserver}"/>
         <echo/>
         <echo/>
@@ -148,7 +168,7 @@
     <!-- PERFORM SOME TARGET SERVER CLEANUP ON THE REMOTE WORKING DIRECTORY   -->
     <target name="servercleanup">
         <echo message="-----> Remote target working directory cleanup"/>
-        <sshexec    command="rm -rfv ${jasmin.workdir}/*.zip" 
+        <sshexec    command="rm -rfv ${jasmin.backupdir}/*.zip" 
                     host="${jasminserver}"
                     username="${jasminuser}" 
                     password="${jasminpass}"                    
