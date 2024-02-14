@@ -29,6 +29,7 @@
         <echo message="----->"/>
         <echo message="-----> .......... sshjasmin : test ssh jasmin"/>
         <echo message="-----> .......... cleanup : Shoot all previous local build files"/>
+        <echo message="-----> .......... servercleanup : Shoot all previous build files on server"/>
         <echo message=""/>
     </target>
     <!--  =====================================================================================  -->
@@ -47,7 +48,7 @@
         <fixcrlf srcdir="${home.dir}" includes="**/.bashrc" eol="lf" eof="remove"/>
     </target>
     <!-- COPY SHELL PROCS ON JASMIN  -->
-    <target name="put-jasmin-procs" depends="cleanup">
+    <target name="put-procs" depends="cleanup">
         <echo/>
         <echo message="Update jasmin procs"/>
         <echo/>
@@ -107,18 +108,36 @@
             <param name="targetenv" value="PROD"/>
         </antcall>
     </target>
+    <!-- RESTORE IMAGES ARCHIVES TO THE PROD ENVIRONMENT  -->
+    <target name="restore-images-toprod">
+        <echo/>
+        <echo message="Restore images archives to PROD"/>
+        <echo/>
+        <sshexec    command="unzip -o ${jasmin.backupdir}/some-jpg-jpeg.zip -d ${jasmin.prodpublic}" 
+                    host="${jasminserver}"
+                    username="${jasminuser}" 
+                    password="${jasminpass}"                    
+                    trust="true" 
+                    verbose="${zip.verbosemode}"/>
+        <sshexec    command="unzip -o ${jasmin.backupdir}/webp-gif-svg.zip -d ${jasmin.prodpublic}" 
+                    host="${jasminserver}"
+                    username="${jasminuser}" 
+                    password="${jasminpass}"                    
+                    trust="true" 
+                    verbose="${zip.verbosemode}"/>
+    </target>
     <!-- BACKUP & GET DEV DB FROM JASMIN  -->
-    <target name="get-jasmin-dev-db" depends="cleanup">
+    <target name="get-dev-db" depends="cleanup">
         <echo/>
         <echo message="get a DB backup from jasmin dev"/>
         <echo/>
         <sshexec    host="${jasminserver}"
                     username="${jasminuser}" 
                     password="${jasminpass}"                    
-                    command="mysqldump -u ${bomerle.dbuser} --password=${bomerle.dbpass} ${bomerle.db} --result-file=${jasmin.workdir}/toba3789_DEVbomerle.sql"
+                    command="mysqldump -u ${bomerle.dbuser} --password=${bomerle.dbpass} ${bomerle.db} --result-file=${jasmin.backupdir}/toba3789_DEVbomerle.sql"
                     trust="true" 
                     verbose="${verbosemode}"/>
-        <scp file="${jasminuser}:${jasminpass}@${jasminserver}:${jasmin.workdir}/toba3789_DEVbomerle.sql" 
+        <scp file="${jasminuser}:${jasminpass}@${jasminserver}:${jasmin.backupdir}/toba3789_DEVbomerle.sql" 
                     trust="true" todir="${save.dir}"/>
     </target>
     <!-- BACKUP & GET PROD DB FROM JASMIN  -->
