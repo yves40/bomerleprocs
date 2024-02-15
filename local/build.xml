@@ -16,17 +16,25 @@
         <echo message="L O C A L"/>
         <echo message=""/>
         <echo message="-----> .......... localbashrc: Push local .bashrc"/>
-        <echo message="-----> .......... restore-prod-images : restore images in local symfony "/>
-        <echo message="-----> .......... restore-dev-images : restore images in local symfony "/>
+        <echo message="-----> .......... restore-prod-images : restore PROD images in local symfony "/>
+        <echo message="-----> .......... restore-dev-images : restore DEV images in local symfony "/>
         <echo message=""/>
         <echo message="J A S M I N "/>
         <echo message=""/>
+        <echo message="----->            DEV "/>
+        <echo message=""/>
         <echo message="-----> .......... get-jasmin-dev-images : get images from jasmin DEV "/>
+        <echo message="-----> .......... restore-jasmin-dev-images : Restore images archive on DEV "/>
+        <echo message="-----> .......... copy-jasmin-prod-images : Copy PROD images on DEV"/>
+        <echo message=""/>
+        <echo message="----->            PROD "/>
+        <echo message=""/>
         <echo message="-----> .......... get-jasmin-dev-db : get a DB backup from jasmin DEV "/>
         <echo message="-----> .......... get-jasmin-prod-images : get images from jasmin PROD "/>
         <echo message="-----> .......... get-jasmin-prod-db : get a DB backup from jasmin PROD "/>
-        <echo message="-----> .......... put-jasmin-procs : push shell procs on jasmin"/>
+        <echo message="-----> .......... restore-jasmin-prod-images : Restore images archive on PROD "/>
         <echo message="----->"/>
+        <echo message="-----> .......... put-jasmin-procs : push shell procs on jasmin"/>
         <echo message="-----> .......... sshjasmin : test ssh jasmin"/>
         <echo message="-----> .......... cleanup : Shoot all previous local build files"/>
         <echo message="-----> .......... servercleanup : Shoot all previous build files on server"/>
@@ -109,17 +117,44 @@
         </antcall>
     </target>
     <!-- RESTORE IMAGES ARCHIVES TO THE PROD ENVIRONMENT  -->
-    <target name="restore-images-toprod">
+    <target name="restore-jasmin-prod-images">
         <echo/>
-        <echo message="Restore images archives to PROD"/>
+        <echo message="Restore PROD images archives on Jasmin"/>
+        <antcall target="restoreimages">
+            <param name="targetenv" value="PROD"/> 
+            <param name="webdir" value="${jasmin.prodpublic}"/>    
+        </antcall>
         <echo/>
-        <sshexec    command="unzip -o ${jasmin.backupdir}/some-jpg-jpeg.zip -d ${jasmin.prodpublic}" 
+    </target>
+    <!-- RESTORE IMAGES ARCHIVES TO THE DEV ENVIRONMENT  -->
+    <target name="restore-jasmin-dev-images">
+        <echo/>
+        <echo message="Restore DEV images archives on Jasmin"/>
+        <antcall target="restoreimages">
+            <param name="targetenv" value="DEV"/> 
+            <param name="webdir" value="${jasmin.devpublic}"/>    
+        </antcall>
+        <echo/>
+    </target>
+    <!-- COPY PROD IMAGES ARCHIVES TO THE DEV ENVIRONMENT  -->
+    <target name="copy-jasmin-prod-images">
+        <echo/>
+        <echo message="Copy PROD images on DEV"/>
+        <antcall target="restoreimages">
+            <param name="targetenv" value="DEV"/> 
+            <param name="webdir" value="${jasmin.prodpublic}"/>    
+        </antcall>
+        <echo/>
+    </target>
+    <!-- GENERIC RESTORE IMAGES ARCHIVES TO AN ENVIRONMENT  -->
+    <target name="restoreimages">
+        <sshexec    command="unzip -o ${jasmin.backupdir}/${targetenv}-some-jpg-jpeg.zip -d ${webdir}" 
                     host="${jasminserver}"
                     username="${jasminuser}" 
                     password="${jasminpass}"                    
                     trust="true" 
                     verbose="${zip.verbosemode}"/>
-        <sshexec    command="unzip -o ${jasmin.backupdir}/webp-gif-svg.zip -d ${jasmin.prodpublic}" 
+        <sshexec    command="unzip -o ${jasmin.backupdir}/${targetenv}-webp-gif-svg.zip -d ${webdir}" 
                     host="${jasminserver}"
                     username="${jasminuser}" 
                     password="${jasminpass}"                    
