@@ -5,7 +5,7 @@
 #---------------------------------------------------------------------------------------
 #   Params
 #---------------------------------------------------------------------------------------
-version="admin.sh, 1.00"
+version="admin.sh, Jul 12 2024 : 1.02 "
 #---------------------------------------------------------------------------------------
 #   Some parameters
 #---------------------------------------------------------------------------------------
@@ -14,6 +14,7 @@ LOCALTARGETDB="todelete"
 LOCALWEBDIR="$HOME/bomerleprod"
 LOCALBACKUPDIR="$HOME/bomerleprocs/backups"
 FEEDBACK="-"
+GETINPUT="$HOME/bomerleprocs/local/ask.sh"
 #---------------------------------------------------------------------------------------
 #   Running under cygwin ?
 #---------------------------------------------------------------------------------------
@@ -37,25 +38,11 @@ log()
 feedback() 
 {
         FEEDBACK="`date` : $1"
-}
-#---------------------------------------------------------------------------------------
-#   Check command line input
-#   No longer used
-#---------------------------------------------------------------------------------------
-checkCommandlineInput()
-{
-    if [ -z $1 ]; then
-        SOURCEDATABASE=`./ask.sh "Give the mysql target database name : " "todelete"` 
-    else
-        SOURCEDATABASE=$1
-    fi
-    log "The target database is : $SOURCEDATABASE"
-    if [ -z $2 ]; then
-      log 'No second parameter specified'
-    fi
-    if [ -z $3 ]; then
-      log 'No second parameter specified'
-    fi
+        if [ ! -z $2 ]
+        then
+          echo $1
+          echo
+        fi
 }
 #---------------------------------------------------------------------------------------
 #   Main menu 
@@ -65,19 +52,14 @@ menu()
   clear
   echo ""
   echo ""
-  if [ "$FEEDBACK" = "-" ]
-  then
-    echo `date`
-  else
-    echo $FEEDBACK
-    FEEDBACK="-"
-  fi
+  echo $version
+  echo `date`
+  echo $FEEDBACK
   echo
   echo  
   echo "-------------------------------------------------------------------------------"
   echo " L O C A L    A C T I O N S"
   echo "-------------------------------------------------------------------------------"
-  echo
   echo "  rpdb        Restore PROD DB in local mysql"
   echo "  rpi         Restore PROD images in local WEB environment"
   echo
@@ -85,7 +67,6 @@ menu()
   echo "-------------------------------------------------------------------------------"
   echo " L O G S"
   echo "-------------------------------------------------------------------------------"
-  echo
   echo "  val         View actions log"
   echo
   echo
@@ -98,20 +79,19 @@ parsecommand() {
   case "$command" in 
     'rpdb')     echo
                 log "Restoring the PROD db in $LOCALTARGETDB"
-                feedback "PROD DB restored in local environment"
-                echo
+                feedback "PROD DB restored in local environment" "Y"
+                ANSWER=`./ask.sh "return to menu "`
                 ;;
     'rpi')      echo
                 log "Restoring the PROD images in $LOCALWEBDIR/images"
-                feedback "PROD images restored in local environment"
-                echo
+                feedback "PROD images restored in local environment" "Y"
+                ANSWER=`./ask.sh "return to menu "`
                 ;;    
     'val')      echo
                 less $LOG
-                echo
+                ANSWER=`./ask.sh "return to menu "`
                 ;;    
     *)          feedback "Unknown command"
-                echo
                 ;;
   esac
 }
@@ -131,7 +111,7 @@ while [ 1 ]
 do
   menu
   ANSWER=`./ask.sh "Enter a command listed above, return to exit "`
-  if [ -z $ANSWER ]; 
+  if [ -z $ANSWER ]
   then
     break
   else
