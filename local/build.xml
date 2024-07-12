@@ -18,6 +18,7 @@
         <echo message="-----> .......... localbashrc: Push local .bashrc"/>
         <echo message="-----> .......... restore-prod-images : restore PROD images in local symfony "/>
         <echo message="-----> .......... restore-dev-images : restore DEV images in local symfony "/>
+        <echo message="-----> .......... restore-prod-db : restore PROD DB in local mysql database : bomerledb "/>
         <echo message=""/>
         <echo message="J A S M I N "/>
         <echo message=""/>
@@ -45,6 +46,19 @@
     <!--  LOCAL AND REMOTE TASKS  -->
     <!--  =====================================================================================  -->
     <!-- COPY .bashrc LOCALLY AND PERFORM CR/LF TRANSFORMATION  -->
+    <target name="restore-prod-db">
+        <echo/>
+        <echo message="Restore the jasmin PROD backup to the local bomerledb mysql database"/>
+        <exec executable="${mysqlexe}">
+            <arg value="--user=root"/>
+            <arg value="--password=root"/>
+            <arg value="todelete"/>
+            <redirector inputstring="source ${save.dir}/toba3789_PRODbomerle.sql"></redirector>
+            <!-- <arg value="${mysqldb}"/> -->
+            <!-- <arg value="-e ${save.dir}/toba3789_PRODbomerle.sql"/> -->
+        </exec>
+        <echo/>
+    </target>
     <target name="localbashrc">
         <echo/>
         <echo message="Update local .bashrc"/>

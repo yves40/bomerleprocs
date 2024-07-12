@@ -6,7 +6,7 @@ if [ -f /etc/bashrc ]; then
 fi
 
 # User specific environment
-if ! [[ "$PATH" =~ "$HOME/.local/bin:$HOME/bin:" ]]
+if ! [ "$PATH" =~ "$HOME/.local/bin:$HOME/bin:" ]
 then
     PATH="$HOME/.local/bin:$HOME/bin:$PATH"
 fi
@@ -27,3 +27,4 @@ alias sqlprod='mysql --user=toba3789_root --password=Manager1+root@3789 toba3789
 export PATH=$PATH:/opt/alt/alt-nodejs16/root/usr/bin/
 export DEV=~/DEV/bomerle
 export PROD=~/PROD/bomerle
+export PS1="[ \t \w ] $ "
