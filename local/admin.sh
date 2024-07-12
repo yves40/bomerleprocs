@@ -13,7 +13,7 @@ LOG="/tmp/O2ratoon-admin.log"
 LOCALTARGETDB="todelete"
 LOCALWEBDIR="$HOME/bomerleprod"
 LOCALBACKUPDIR="$HOME/bomerleprocs/backups"
-FEEDBACK="-"
+FEEDBACK=""
 GETINPUT="$HOME/bomerleprocs/local/ask.sh"
 #---------------------------------------------------------------------------------------
 #   Running under cygwin ?
@@ -54,7 +54,11 @@ menu()
   echo ""
   echo $version
   echo `date`
-  echo $FEEDBACK
+  if [ ! "$FEEDBACK" = "" ]
+  then
+    echo "Latest message : $FEEDBACK"
+    FEEDBACK=""
+  fi
   echo
   echo  
   echo "-------------------------------------------------------------------------------"
@@ -63,11 +67,10 @@ menu()
   echo "  rpdb        Restore PROD DB in local mysql"
   echo "  rpi         Restore PROD images in local WEB environment"
   echo
-  echo
   echo "-------------------------------------------------------------------------------"
   echo " L O G S"
   echo "-------------------------------------------------------------------------------"
-  echo "  val         View actions log"
+  echo "  log         View actions log"
   echo
   echo
 }
@@ -87,7 +90,7 @@ parsecommand() {
                 feedback "PROD images restored in local environment" "Y"
                 ANSWER=`./ask.sh "return to menu "`
                 ;;    
-    'val')      echo
+    'log')      echo
                 less $LOG
                 ANSWER=`./ask.sh "return to menu "`
                 ;;    
@@ -110,7 +113,7 @@ echo ""
 while [ 1 ]
 do
   menu
-  ANSWER=`./ask.sh "Enter a command listed above, return to exit "`
+  ANSWER=`./ask.sh "Enter a command listed above or return to exit : "`
   if [ -z $ANSWER ]
   then
     break
