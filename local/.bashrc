@@ -7,3 +7,6 @@ alias ant='cd bomerleprocs/local; ant'
 alias ssh='ssh -x'
 alias admin='cd bomerleprocs/local; ./admin.sh'
 
+export LOCALTARGETDB=todelete
+export O2logs=/tmp/O2ratoon-admin.log
+

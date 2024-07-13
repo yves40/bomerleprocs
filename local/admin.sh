@@ -5,12 +5,11 @@
 #---------------------------------------------------------------------------------------
 #   Params
 #---------------------------------------------------------------------------------------
-version="admin.sh, Jul 12 2024 : 1.02 "
+version="admin.sh, Jul 13 2024 : 1.04 "
 #---------------------------------------------------------------------------------------
 #   Some parameters
 #---------------------------------------------------------------------------------------
-LOG="/tmp/O2ratoon-admin.log"
-LOCALTARGETDB="todelete"
+LOCALTARGETDB="$LOCALTARGETDB"  # Get it from parent shell
 LOCALWEBDIR="$HOME/bomerleprod"
 LOCALBACKUPDIR="$HOME/bomerleprocs/backups"
 FEEDBACK=""
@@ -32,7 +31,7 @@ fi
 #---------------------------------------------------------------------------------------
 log() 
 {
-        echo "`date` : $version $1" >> $LOG
+        echo "`date` : $version $1" >> $O2logs
         echo "`date` : $1"
 }
 feedback() 
@@ -50,22 +49,25 @@ feedback()
 menu()
 {
   clear
-  echo ""
-  echo ""
-  echo $version
-  echo `date`
+  echo 
+  echo "[ $version ]"
+  echo "[ `date` ]"
+  echo "[ Selected local target DB : $LOCALTARGETDB]"
   if [ ! "$FEEDBACK" = "" ]
   then
     echo "Latest message : $FEEDBACK"
     FEEDBACK=""
   fi
-  echo
-  echo  
+  echo 
+  echo 
   echo "-------------------------------------------------------------------------------"
   echo " L O C A L    A C T I O N S"
   echo "-------------------------------------------------------------------------------"
-  echo "  rpdb        Restore PROD DB in local mysql"
-  echo "  rpi         Restore PROD images in local WEB environment"
+  echo "  ListDBbackups        List the available PROD DB backups"
+  echo "  ListImagesbackups    List the available PROD images backups"
+  echo "  ListAllbackups       List all DB and images backups"
+  echo "  RestoreProdDB        Restore PROD DB in local mysql"
+  echo "  RestoreProdImages    Restore PROD images in local WEB environment"
   echo
   echo "-------------------------------------------------------------------------------"
   echo " L O G S"
@@ -80,19 +82,30 @@ menu()
 parsecommand() {
   command=`echo $1 | tr A-Z a-z`
   case "$command" in 
-    'rpdb')     echo
-                log "Restoring the PROD db in $LOCALTARGETDB"
-                feedback "PROD DB restored in local environment" "Y"
-                ANSWER=`./ask.sh "return to menu "`
+    'restoreproddb')     
+                echo
+                ./restoreProdDB.sh $LOCALBACKUPDIR $LOCALTARGETDB
                 ;;
-    'rpi')      echo
+    'restoreprodimages')
+                echo
                 log "Restoring the PROD images in $LOCALWEBDIR/images"
-                feedback "PROD images restored in local environment" "Y"
-                ANSWER=`./ask.sh "return to menu "`
+                feedback "PROD images restored in local environment"
+                echo; ANSWER=`./ask.sh "return to menu "`
                 ;;    
+    'listdbbackups')
+                echo; ls -l $LOCALBACKUPDIR/*.sql
+                echo; ANSWER=`./ask.sh "return to menu "`
+                ;;
+    'listimagesbackups')
+                echo; ls -l $LOCALBACKUPDIR/*.zip
+                echo; ANSWER=`./ask.sh "return to menu "`
+                ;;
+    'listallbackups')
+                echo; ls -l $LOCALBACKUPDIR
+                echo; ANSWER=`./ask.sh "return to menu "`
+                ;;
     'log')      echo
-                less $LOG
-                ANSWER=`./ask.sh "return to menu "`
+                less $O2logs
                 ;;    
     *)          feedback "Unknown command"
                 ;;
@@ -100,8 +113,6 @@ parsecommand() {
 }
 #---------------------------------------------------------------------------------------
 #   S T A R T   H E R E
-#---------------------------------------------------------------------------------------
-#   INIT 
 #---------------------------------------------------------------------------------------
 clear
 echo ""
