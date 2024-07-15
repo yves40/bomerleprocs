@@ -5,7 +5,7 @@
 #---------------------------------------------------------------------------------------
 #   Params
 #---------------------------------------------------------------------------------------
-version="admin.sh, Jul 13 2024 : 1.04 "
+version="admin.sh, Jul 15 2024 : 1.05 "
 #---------------------------------------------------------------------------------------
 #   Some parameters
 #---------------------------------------------------------------------------------------
@@ -66,13 +66,14 @@ menu()
   echo "  ListDBbackups        List the available PROD DB backups"
   echo "  ListImagesbackups    List the available PROD images backups"
   echo "  ListAllbackups       List all DB and images backups"
+  echo
   echo "  RestoreProdDB        Restore PROD DB in local mysql"
   echo "  RestoreProdImages    Restore PROD images in local WEB environment"
   echo
   echo "-------------------------------------------------------------------------------"
   echo " L O G S"
   echo "-------------------------------------------------------------------------------"
-  echo "  log         View actions log"
+  echo "  log                  View actions log"
   echo
   echo
 }
@@ -85,24 +86,29 @@ parsecommand() {
     'restoreproddb')     
                 echo
                 ./restoreProdDB.sh $LOCALBACKUPDIR $LOCALTARGETDB
+                tdb=$(cat todelete.data); rm todelete.data
+                feedback "PROD DB restored in local database : $tdb" "y"
+                LOCALTARGETDB="$tdb"
+                export LOCALTARGETDB="$tdb"
                 ;;
     'restoreprodimages')
                 echo
                 log "Restoring the PROD images in $LOCALWEBDIR/images"
+                echo; ls -l $LOCALBACKUPDIR/*.zip
+                log "Unzipping LOCALBACKUPDIR/PROD-some-jpg-jpeg.zip"
+                unzip -x $LOCALBACKUPDIR/PROD-some-jpg-jpeg.zip -d $LOCALWEBDIR -o
+                log "Unzipping LOCALBACKUPDIR/PROD-webp-gif-svg.zip"
+                unzip -x $LOCALBACKUPDIR/PROD-webp-gif-svg.zip -d $LOCALWEBDIR -o
                 feedback "PROD images restored in local environment"
-                echo; ANSWER=`./ask.sh "return to menu "`
                 ;;    
     'listdbbackups')
                 echo; ls -l $LOCALBACKUPDIR/*.sql
-                echo; ANSWER=`./ask.sh "return to menu "`
                 ;;
     'listimagesbackups')
                 echo; ls -l $LOCALBACKUPDIR/*.zip
-                echo; ANSWER=`./ask.sh "return to menu "`
                 ;;
     'listallbackups')
                 echo; ls -l $LOCALBACKUPDIR
-                echo; ANSWER=`./ask.sh "return to menu "`
                 ;;
     'log')      echo
                 less $O2logs
@@ -110,6 +116,7 @@ parsecommand() {
     *)          feedback "Unknown command"
                 ;;
   esac
+  echo; ANSWER=`./ask.sh "Back to menu <CR> "`
 }
 #---------------------------------------------------------------------------------------
 #   S T A R T   H E R E
@@ -124,7 +131,7 @@ echo ""
 while [ 1 ]
 do
   menu
-  ANSWER=`./ask.sh "Enter a command listed above or return to exit : "`
+  ANSWER=`./ask.sh "Enter a command listed above or <CR> exit : "`
   if [ -z $ANSWER ]
   then
     break
