@@ -1,11 +1,9 @@
 #---------------------------------------------------------------------------------------
 #   admin.sh
-#
-#   Jul 12 2024 Initial
 #---------------------------------------------------------------------------------------
 #   Params
 #---------------------------------------------------------------------------------------
-version="admin.sh, Jul 15 2024 : 1.05 "
+version="admin.sh, Jul 29 2024 : 1.07 "
 #---------------------------------------------------------------------------------------
 #   Some parameters
 #---------------------------------------------------------------------------------------
@@ -63,12 +61,12 @@ menu()
   echo "-------------------------------------------------------------------------------"
   echo " L O C A L    A C T I O N S"
   echo "-------------------------------------------------------------------------------"
-  echo "  ListDBbackups        List the available PROD DB backups"
-  echo "  ListImagesbackups    List the available PROD images backups"
-  echo "  ListAllbackups       List all DB and images backups"
+  echo "  10 ListDBbackups        List the available PROD DB backups"
+  echo "  11 ListImagesbackups    List the available PROD images backups"
+  echo "  12 ListAllbackups       List all DB and images backups"
   echo
-  echo "  RestoreProdDB        Restore PROD DB in local mysql"
-  echo "  RestoreProdImages    Restore PROD images in local WEB environment"
+  echo "  20 RestoreProdDB        Restore PROD DB in local mysql"
+  echo "  21 RestoreProdImages    Restore PROD images in local WEB environment"
   echo
   echo "-------------------------------------------------------------------------------"
   echo " L O G S"
@@ -83,7 +81,7 @@ menu()
 parsecommand() {
   command=`echo $1 | tr A-Z a-z`
   case "$command" in 
-    'restoreproddb')     
+    '20')     
                 echo
                 ./restoreProdDB.sh $LOCALBACKUPDIR $LOCALTARGETDB
                 tdb=$(cat todelete.data); rm todelete.data
@@ -91,7 +89,7 @@ parsecommand() {
                 LOCALTARGETDB="$tdb"
                 export LOCALTARGETDB="$tdb"
                 ;;
-    'restoreprodimages')
+    '21')
                 echo
                 log "Restoring the PROD images in $LOCALWEBDIR/images"
                 echo; ls -l $LOCALBACKUPDIR/*.zip
@@ -101,13 +99,13 @@ parsecommand() {
                 unzip -x $LOCALBACKUPDIR/PROD-webp-gif-svg.zip -d $LOCALWEBDIR -o
                 feedback "PROD images restored in local environment"
                 ;;    
-    'listdbbackups')
+    '10')
                 echo; ls -l $LOCALBACKUPDIR/*.sql
                 ;;
-    'listimagesbackups')
+    '11')
                 echo; ls -l $LOCALBACKUPDIR/*.zip
                 ;;
-    'listallbackups')
+    '12')
                 echo; ls -l $LOCALBACKUPDIR
                 ;;
     'log')      echo

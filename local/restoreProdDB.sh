@@ -40,6 +40,16 @@ echo
 cd $1
 log "mysql --user=$MSQLUSER --password=$MSQLPASSWORD $TARGET"
 
+grep 99999 $DBFILE > todelete
+if [ $? == 0 ]
+then
+  echo "************ Stripped"
+  tail -n +2 $DBFILE > "$DBFILE.strip"
+  cp "$DBFILE.strip" $DBFILE
+  rm "$DBFILE.strip"
+fi
+rm todelete
+
 echo "set autocommit=0;" > todelete.sql
 echo "source $DBFILE ;" >> todelete.sql
 echo "commit;" >> todelete.sql
