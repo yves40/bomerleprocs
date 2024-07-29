@@ -8,6 +8,7 @@ alias ssh='ssh -x'
 alias admin='cd bomerleprocs/local; ./admin.sh'
 
 export LOCALTARGETDB=todelete
+export LOCALBACKUPDIR=$HOME/bomerleprocs/backups
 export O2logs=/tmp/O2ratoon-admin.log
 export MSQLUSER=root
 export MSQLPASSWORD=root
