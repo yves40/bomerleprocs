@@ -3,7 +3,7 @@
 #---------------------------------------------------------------------------------------
 #   Params
 #---------------------------------------------------------------------------------------
-version="admin.sh, Jul 29 2024 : 1.07 "
+version="admin.sh, Aug 08 2024 : 1.08 "
 #---------------------------------------------------------------------------------------
 #   Some parameters
 #---------------------------------------------------------------------------------------
@@ -11,7 +11,7 @@ LOCALTARGETDB="$LOCALTARGETDB"  # Get it from parent shell
 LOCALWEBDIR="$HOME/bomerleprod"
 LOCALBACKUPDIR="$HOME/bomerleprocs/backups"
 FEEDBACK=""
-GETINPUT="$HOME/bomerleprocs/local/ask.sh"
+lastcommand=""
 #---------------------------------------------------------------------------------------
 #   Running under cygwin ?
 #---------------------------------------------------------------------------------------
@@ -61,12 +61,12 @@ menu()
   echo "-------------------------------------------------------------------------------"
   echo " L O C A L    A C T I O N S"
   echo "-------------------------------------------------------------------------------"
-  echo "  10 ListDBbackups        List the available PROD DB backups"
-  echo "  11 ListImagesbackups    List the available PROD images backups"
-  echo "  12 ListAllbackups       List all DB and images backups"
+  echo "  10 / ListDBbackups        List the available PROD DB backups"
+  echo "  11 / ListImagesbackups    List the available PROD images backups"
+  echo "  12 / ListAllbackups       List all DB and images backups"
   echo
-  echo "  20 RestoreProdDB        Restore PROD DB in local mysql"
-  echo "  21 RestoreProdImages    Restore PROD images in local WEB environment"
+  echo "  20 / RestoreProdDB        Restore PROD DB in local mysql"
+  echo "  21 / RestoreProdImages    Restore PROD images in local WEB environment"
   echo
   echo "-------------------------------------------------------------------------------"
   echo " L O G S"
@@ -82,22 +82,30 @@ parsecommand() {
   command=`echo $1 | tr A-Z a-z`
   case "$command" in 
     '20')     
-                echo
-                ./restoreProdDB.sh $LOCALBACKUPDIR $LOCALTARGETDB
-                tdb=$(cat todelete.data); rm todelete.data
-                feedback "PROD DB restored in local database : $tdb" "y"
-                LOCALTARGETDB="$tdb"
-                export LOCALTARGETDB="$tdb"
+                echo;echo
+                ANSWER=`./ask.sh "Proceed ? Y/N <CR> " "N"`
+                if [ `echo $ANSWER | tr A-Z a-z` == "y" ] 
+                then
+                  ./restoreProdDB.sh $LOCALBACKUPDIR $LOCALTARGETDB
+                  tdb=$(cat todelete.data); rm todelete.data
+                  feedback "PROD DB restored in local database : $tdb" "y"
+                  LOCALTARGETDB="$tdb"
+                  export LOCALTARGETDB="$tdb"
+                fi
                 ;;
     '21')
                 echo
-                log "Restoring the PROD images in $LOCALWEBDIR/images"
-                echo; ls -l $LOCALBACKUPDIR/*.zip
-                log "Unzipping LOCALBACKUPDIR/PROD-some-jpg-jpeg.zip"
-                unzip -x $LOCALBACKUPDIR/PROD-some-jpg-jpeg.zip -d $LOCALWEBDIR -o
-                log "Unzipping LOCALBACKUPDIR/PROD-webp-gif-svg.zip"
-                unzip -x $LOCALBACKUPDIR/PROD-webp-gif-svg.zip -d $LOCALWEBDIR -o
-                feedback "PROD images restored in local environment"
+                echo; ls -l $LOCALBACKUPDIR/*.zip; echo; echo
+                ANSWER=`./ask.sh "Proceed ? Y/N <CR> " "N"`
+                if [ `echo $ANSWER | tr A-Z a-z` == "y" ] 
+                then
+                  log "Restoring the PROD images in $LOCALWEBDIR/images"
+                  log "Unzipping LOCALBACKUPDIR/PROD-some-jpg-jpeg.zip"
+                  unzip -x $LOCALBACKUPDIR/PROD-some-jpg-jpeg.zip -d $LOCALWEBDIR -o
+                  log "Unzipping LOCALBACKUPDIR/PROD-webp-gif-svg.zip"
+                  unzip -x $LOCALBACKUPDIR/PROD-webp-gif-svg.zip -d $LOCALWEBDIR -o
+                  feedback "PROD images restored in local environment"
+                fi
                 ;;    
     '10')
                 echo; ls -l $LOCALBACKUPDIR/*.sql
@@ -110,6 +118,9 @@ parsecommand() {
                 ;;
     'log')      echo
                 less $O2logs
+                ;;    
+    'x')        echo
+                exit 0
                 ;;    
     *)          feedback "Unknown command"
                 ;;
@@ -124,16 +135,17 @@ echo ""
 echo "$version"
 echo ""
 #---------------------------------------------------------------------------------------
-#   Some preliminary questions
+#   menu input
 #---------------------------------------------------------------------------------------
 while [ 1 ]
 do
   menu
-  ANSWER=`./ask.sh "Enter a command listed above or <CR> exit : "`
+  ANSWER=`./ask.sh "Enter a command listed above or X to exit : " "$lastcommand"`
   if [ -z $ANSWER ]
   then
     break
   else
+    lastcommand=$ANSWER
     parsecommand $ANSWER
   fi
 done
