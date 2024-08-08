@@ -12,4 +12,8 @@ export LOCALBACKUPDIR=$HOME/bomerleprocs/backups
 export O2logs=/tmp/O2ratoon-admin.log
 export MSQLUSER=root
 export MSQLPASSWORD=root
+export O2USER=toba3789
+export O2PASS=AAcV-fDQC-Bun#
+export O2HOST=jasmin.o2switch.net
+
 
