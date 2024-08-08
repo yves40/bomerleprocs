@@ -1,5 +1,6 @@
 /local/build.local.properties
 /local/build-sample.xml
+/local/.bashrc
 /backups
 /servers/jasmin/.bashrc
 
