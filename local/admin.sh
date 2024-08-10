@@ -3,7 +3,7 @@
 #---------------------------------------------------------------------------------------
 #   Params
 #---------------------------------------------------------------------------------------
-version="admin.sh, Aug 10 2024 : 1.11 "
+version="admin.sh, Aug 10 2024 : 1.13 "
 #---------------------------------------------------------------------------------------
 #   Some parameters
 #---------------------------------------------------------------------------------------
@@ -159,6 +159,7 @@ getPRODDBcopy () {
     mysqldump -u $SQLUSER --password=$SQLPASS --result-file=BACKUP/$DATESIGNATURE-$SQLPRODDB.sql $SQLPRODDB
     echo; ls -l ~/BACKUP
 EOF
+  scp "$O2USER@$O2HOST:BACKUP/$DATESIGNATURE-$SQLPRODDB.sql bomerleprocs/backups"
 }
 #---------------------------------------------------------------------------------------
 #   S T A R T   H E R E
