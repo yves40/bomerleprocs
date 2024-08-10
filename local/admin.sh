@@ -3,7 +3,7 @@
 #---------------------------------------------------------------------------------------
 #   Params
 #---------------------------------------------------------------------------------------
-version="admin.sh, Aug 08 2024 : 1.09 "
+version="admin.sh, Aug 10 2024 : 1.11 "
 #---------------------------------------------------------------------------------------
 #   Some parameters
 #---------------------------------------------------------------------------------------
@@ -124,7 +124,12 @@ parsecommand() {
                 echo; ls -l $LOCALBACKUPDIR
                 ;;
     '50')
-                getPRODDBcopy
+                echo;echo
+                ANSWER=`./ask.sh "Proceed ? Y/N <CR> " "N"`
+                if [ `echo $ANSWER | tr A-Z a-z` == "y" ] 
+                then
+                  getPRODDBcopy
+                fi
                 ;;
     'log')      echo
                 less $O2logs
@@ -138,13 +143,21 @@ parsecommand() {
   echo; ANSWER=`./ask.sh "Back to menu <CR> "`
 }
 #---------------------------------------------------------------------------------------
-#   Get a backup of PROD db
+#   Get a backup of PROD db 
 #---------------------------------------------------------------------------------------
 getPRODDBcopy () {
-  echo;echo;echo "File root will be : $DATESIGNATURE"
-  ssh -x "$O2USER@$O2HOST" << EOF
-ls -l
-exit
+  ssh -x "$O2USER@$O2HOST" <<-EOF
+    echo;echo;echo "File root will be : $DATESIGNATURE"
+    echo; ls -l ~/BACKUP
+    DATESIGNATURE=`date +"%Y-%m-%d"`
+    if [ -f BACKUP/$DATESIGNATURE-toba3789_PRODbomerle.sql ]
+    then
+      rm BACKUP/$DATESIGNATURE-toba3789_PRODbomerle.sql
+    fi
+    echo;env | grep SQL;echo
+    echo;echo "Connect as $SQLUSER on $SQLPRODDB";echo
+    mysqldump -u $SQLUSER --password=$SQLPASS --result-file=BACKUP/$DATESIGNATURE-$SQLPRODDB.sql $SQLPRODDB
+    echo; ls -l ~/BACKUP
 EOF
 }
 #---------------------------------------------------------------------------------------
