@@ -16,6 +16,7 @@
         <echo message="L O C A L"/>
         <echo message=""/>
         <echo message="-----> .......... localbashrc: Push local .bashrc"/>
+        <echo message="-----> .......... savebashrc: Save .bashrc files not pushed in GIT"/>
         <echo message="-----> .......... restore-prod-images : restore PROD images in local symfony "/>
         <echo message="-----> .......... restore-dev-images : restore DEV images in local symfony "/>
         <echo message="-----> .......... restore-prod-db : restore PROD DB in local mysql database : bomerledb "/>
@@ -66,6 +67,18 @@
         <copy todir="${home.dir}" verbose="${copy.verbosemode}">
             <fileset dir="${src.dir}" casesensitive="true">
                 <include name="local/.bashrc"/>
+            </fileset>
+        </copy>
+        <fixcrlf srcdir="${home.dir}" includes="**/.bashrc" eol="lf" eof="remove"/>
+    </target>
+    <target name="savebashrc">
+        <echo/>
+        <echo message="save untracked .bashrc files"/>
+        <echo/>
+        <copy todir="${localsave.dir}" verbose="${copy.verbosemode}">
+            <fileset dir="${src.dir}" casesensitive="true">
+                <include name="local/.bashrc"/>
+                <include name="servers/jasmin/.bashrc"/>
             </fileset>
         </copy>
         <fixcrlf srcdir="${home.dir}" includes="**/.bashrc" eol="lf" eof="remove"/>
