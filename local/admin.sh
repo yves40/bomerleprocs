@@ -159,7 +159,8 @@ getPRODDBcopy () {
     mysqldump -u $SQLUSER --password=$SQLPASS --result-file=BACKUP/$DATESIGNATURE-$SQLPRODDB.sql $SQLPRODDB
     echo; ls -l ~/BACKUP
 EOF
-  scp "$O2USER@$O2HOST:BACKUP/$DATESIGNATURE-$SQLPRODDB.sql bomerleprocs/backups"
+  echo;echo "scp $O2USER@$O2HOST:BACKUP/$DATESIGNATURE-$SQLPRODDB.sql ~/bomerleprocs/backups";echo
+  scp $O2USER@$O2HOST:BACKUP/$DATESIGNATURE-$SQLPRODDB.sql ~/bomerleprocs/backups
 }
 #---------------------------------------------------------------------------------------
 #   S T A R T   H E R E
