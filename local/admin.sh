@@ -3,7 +3,7 @@
 #---------------------------------------------------------------------------------------
 #   Params
 #---------------------------------------------------------------------------------------
-version="admin.sh, Aug 10 2024 : 1.13 "
+version="admin.sh, Aug 11 2024 : 1.15 "
 #---------------------------------------------------------------------------------------
 #   Some parameters
 #---------------------------------------------------------------------------------------
@@ -13,6 +13,8 @@ LOCALBACKUPDIR="$HOME/bomerleprocs/backups"
 FEEDBACK=""
 lastcommand=""
 DATESIGNATURE=`date +"%Y-%m-%d"`
+PROD=PROD/bomerle
+DEV=DEV/bomerle
 #---------------------------------------------------------------------------------------
 #   Running under cygwin ?
 #---------------------------------------------------------------------------------------
@@ -74,6 +76,7 @@ menu()
   echo " R E M O T E   A C T I O N S"
   echo "-------------------------------------------------------------------------------"
   echo "  50 / getPRODDBcopy        Get a copy of the PROD database"
+  echo "  51 / getPRODImagescopy    Get a copy of all PROD images"
   echo
   echo "-------------------------------------------------------------------------------"
   echo " L O G S"
@@ -102,15 +105,11 @@ parsecommand() {
                 ;;
     '21')
                 echo
-                echo; ls -l $LOCALBACKUPDIR/*.zip; echo; echo
+                echo; ls -l $LOCALBACKUPDIR/*.gz; echo; echo
                 ANSWER=`./ask.sh "Proceed ? Y/N <CR> " "N"`
                 if [ `echo $ANSWER | tr A-Z a-z` == "y" ] 
                 then
                   log "Restoring the PROD images in $LOCALWEBDIR/images"
-                  log "Unzipping LOCALBACKUPDIR/PROD-some-jpg-jpeg.zip"
-                  unzip -x $LOCALBACKUPDIR/PROD-some-jpg-jpeg.zip -d $LOCALWEBDIR -o
-                  log "Unzipping LOCALBACKUPDIR/PROD-webp-gif-svg.zip"
-                  unzip -x $LOCALBACKUPDIR/PROD-webp-gif-svg.zip -d $LOCALWEBDIR -o
                   feedback "PROD images restored in local environment"
                 fi
                 ;;    
@@ -131,6 +130,14 @@ parsecommand() {
                   getPRODDBcopy
                 fi
                 ;;
+    '51')
+                echo;echo
+                ANSWER=`./ask.sh "Proceed ? Y/N <CR> " "N"`
+                if [ `echo $ANSWER | tr A-Z a-z` == "y" ] 
+                then
+                  getPRODImagescopy
+                fi
+                ;;
     'log')      echo
                 less $O2logs
                 ;;    
@@ -145,6 +152,29 @@ parsecommand() {
 #---------------------------------------------------------------------------------------
 #   Get a backup of PROD db 
 #---------------------------------------------------------------------------------------
+getPRODImagescopy () {
+  ssh -x "$O2USER@$O2HOST" <<-EOF
+    echo;echo;echo "File root will be : $DATESIGNATURE"
+    echo; ls -l ~/BACKUP
+    echo; ls -l $PROD/public/images
+    DATESIGNATURE=`date +"%Y-%m-%d"`
+    if [ -f BACKUP/$DATESIGNATURE-ALLIMAGES.tar.gz ]
+    then
+      rm BACKUP/$DATESIGNATURE-ALLIMAGES.tar.gz
+    fi
+    echo;echo "Backup all PROD images";echo
+    initdir=$(pwd)
+    cd $PROD/public
+    tar czvf ~/BACKUP/$DATESIGNATURE-ALLIMAGES.tar.gz images
+    cd $initdir
+    echo; ls -l ~/BACKUP
+EOF
+  echo;echo "scp $O2USER@$O2HOST:BACKUP/$DATESIGNATURE-ALLIMAGES.tar.gz ~/bomerleprocs/backups";echo
+  scp $O2USER@$O2HOST:BACKUP/$DATESIGNATURE-ALLIMAGES.tar.gz ~/bomerleprocs/backups
+}
+#---------------------------------------------------------------------------------------
+#   Get a backup of PROD db 
+#---------------------------------------------------------------------------------------
 getPRODDBcopy () {
   ssh -x "$O2USER@$O2HOST" <<-EOF
     echo;echo;echo "File root will be : $DATESIGNATURE"
@@ -154,7 +184,6 @@ getPRODDBcopy () {
     then
       rm BACKUP/$DATESIGNATURE-toba3789_PRODbomerle.sql
     fi
-    echo;env | grep SQL;echo
     echo;echo "Connect as $SQLUSER on $SQLPRODDB";echo
     mysqldump -u $SQLUSER --password=$SQLPASS --result-file=BACKUP/$DATESIGNATURE-$SQLPRODDB.sql $SQLPRODDB
     echo; ls -l ~/BACKUP
