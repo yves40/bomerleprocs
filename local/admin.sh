@@ -3,7 +3,7 @@
 #---------------------------------------------------------------------------------------
 #   Params
 #---------------------------------------------------------------------------------------
-version="admin.sh, Aug 12 2024 : 1.19 "
+version="admin.sh, Aug 13 2024 : 1.20 "
 #---------------------------------------------------------------------------------------
 #   Some parameters
 #---------------------------------------------------------------------------------------
@@ -32,7 +32,7 @@ fi
 #---------------------------------------------------------------------------------------
 log() 
 {
-        echo "`date` : $version $1" >> $O2logs
+        echo "`date` : $version $1" >> $O2LOGS
         echo "`date` : $1"
 }
 feedback() 
@@ -51,7 +51,7 @@ menu()
 {
   clear
   echo 
-  echo "[ $version ]"
+  echo "[ $version ]";echo
   echo "[ `date` ]"
   echo "[ Selected local target DB : $LOCALTARGETDB]"
   if [ ! "$FEEDBACK" = "" ]
@@ -96,7 +96,7 @@ parsecommand() {
                 echo; ls -l $LOCALBACKUPDIR/*.sql
                 ;;
     '11')
-                echo; ls -l $LOCALBACKUPDIR/*.zip
+                echo; ls -l $LOCALBACKUPDIR/*.gz
                 ;;
     '12')
                 echo; ls -l $LOCALBACKUPDIR
@@ -114,7 +114,7 @@ parsecommand() {
     '52')       getPRODFull
                 ;;
     'log')      echo
-                less $O2logs
+                less $O2LOGS
                 ;;    
     'x')        echo
                 exit 0
@@ -203,7 +203,7 @@ RestoreProdImages () {
     # Now proceed
     initdir=$(pwd)
     cd $LOCALWEBDIR/public
-    log "Restoring the PROD images in $LOCALWEBDIR/public/images"
+    feedback "Restoring the PROD images in $LOCALWEBDIR/public/images"
     tar xzvf $GZFILE
     cd $initdir
     feedback "PROD images restored in local environment"
@@ -238,20 +238,18 @@ getPRODImagescopy () {
   then
     ssh -x "$O2USER@$O2HOST" <<-EOF
       echo;echo;echo "File root will be : $DATESIGNATURE"
-      echo; ls -l ~/BACKUP
-      echo; ls -l $PROD/public/images
       DATESIGNATURE=`date +"%Y-%m-%d"`
-      if [ -f BACKUP/$DATESIGNATURE-ALLIMAGES.tar.gz ]
+      if [ -f BACKUP/$DATESIGNATURE-PROD-ALLIMAGES.tar.gz ]
       then
-        rm BACKUP/$DATESIGNATURE-ALLIMAGES.tar.gz
+        rm BACKUP/$DATESIGNATURE-PROD-ALLIMAGES.tar.gz
       fi
       echo;echo "Backup all PROD images";echo
       initdir=$(pwd)
       cd $PROD/public
-      tar czvf ~/BACKUP/$DATESIGNATURE-ALLIMAGES.tar.gz images
+      tar czvf ~/BACKUP/$DATESIGNATURE-PROD-ALLIMAGES.tar.gz images
       cd $initdir
 EOF
-    scp $O2USER@$O2HOST:BACKUP/$DATESIGNATURE-ALLIMAGES.tar.gz ~/bomerleprocs/backups
+    scp $O2USER@$O2HOST:BACKUP/$DATESIGNATURE-PROD-ALLIMAGES.tar.gz ~/bomerleprocs/backups
   fi
 }
 #---------------------------------------------------------------------------------------
@@ -310,4 +308,4 @@ done
 echo ""
 echo ""
 echo ""
-log "Exit admin.sh for O2-Ratoon site"
+feedback "Exit admin.sh for O2-Ratoon site"
