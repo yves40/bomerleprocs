@@ -3,13 +3,14 @@
 #---------------------------------------------------------------------------------------
 #   Params
 #---------------------------------------------------------------------------------------
-version="admin.sh, Aug 13 2024 : 1.20 "
+version="admin.sh, Sep 19 2024 : 1.21 "
 #---------------------------------------------------------------------------------------
 #   Some parameters
 #---------------------------------------------------------------------------------------
 LOCALTARGETDB="$LOCALTARGETDB"  # Get it from parent shell
 LOCALWEBDIR="$HOME/bomerleprod"
 LOCALBACKUPDIR="$HOME/bomerleprocs/backups"
+LOCALPROCSDIR="$HOME/bomerleprocs/local"
 FEEDBACK=""
 lastcommand=""
 DATESIGNATURE=`date +"%Y-%m-%d"`
@@ -138,10 +139,11 @@ RestoreDB() {
     DBFILE=""
     TARGET=""
     initdir=`pwd`
-    echo; ls -l $LOCALBACKUPDIR/*$1*.sql
+    cd $LOCALBACKUPDIR
+    echo; ls -l *$1*.sql
     while [ "$DBFILE" = "" ]
     do
-      echo; DBFILE=`./ask.sh "Which sql file ? "`
+      echo; DBFILE=`$LOCALPROCSDIR/ask.sh "Which sql file ? "`
       if ! [ -f $DBFILE ]
       then
         echo "Please provide a valid file location "
@@ -151,7 +153,7 @@ RestoreDB() {
     done
     while [ "$TARGET" = "" ]
     do
-      echo; TARGET=`./ask.sh "Target DB ? " "$LOCALTARGETDB"`
+      echo; TARGET=`$LOCALPROCSDIR/ask.sh "Target DB ? " "$LOCALTARGETDB"`
     done
     # Ensure we do not have special MYSQL export directive on line 1
     # If so remove it
@@ -174,7 +176,7 @@ RestoreDB() {
       commit;
       exit
 EOF
-
+    #rm todelete.sh
     export LOCALTARGETDB="$TARGET"
     cd $initdir
   fi
