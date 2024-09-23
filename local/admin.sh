@@ -3,7 +3,7 @@
 #---------------------------------------------------------------------------------------
 #   Params
 #---------------------------------------------------------------------------------------
-version="admin.sh, Sep 19 2024 : 1.21 "
+version="admin.sh, Sep 19 2024 : 1.25 "
 #---------------------------------------------------------------------------------------
 #   Some parameters
 #---------------------------------------------------------------------------------------
@@ -11,7 +11,6 @@ LOCALTARGETDB="$LOCALTARGETDB"  # Get it from parent shell
 LOCALWEBDIR="$HOME/bomerleprod"
 LOCALBACKUPDIR="$HOME/bomerleprocs/backups"
 LOCALPROCSDIR="$HOME/bomerleprocs/local"
-FEEDBACK=""
 lastcommand=""
 DATESIGNATURE=`date +"%Y-%m-%d"`
 PROD=PROD/bomerle
@@ -26,6 +25,11 @@ then
         alias clear='cmd /c cls'
     fi
 fi
+if [ ! -f $O2LOGS ]
+then
+  touch $O2LOGS
+  log "Log file initialized for Ratoon admin"
+fi
 #---------------------------------------------------------------------------------------
 #   Some utility routine
 #---------------------------------------------------------------------------------------
@@ -36,15 +40,6 @@ log()
         echo "`date` : $version $1" >> $O2LOGS
         echo "`date` : $1"
 }
-feedback() 
-{
-        FEEDBACK="`date` : $1"
-        if [ ! -z $2 ]
-        then
-          echo $1
-          echo
-        fi
-}
 #---------------------------------------------------------------------------------------
 #   Main menu 
 #---------------------------------------------------------------------------------------
@@ -52,14 +47,9 @@ menu()
 {
   clear
   echo 
-  echo "[ $version ]";echo
+  echo "[ $version ]"
   echo "[ `date` ]"
   echo "[ Selected local target DB : $LOCALTARGETDB]"
-  if [ ! "$FEEDBACK" = "" ]
-  then
-    echo "Latest message : $FEEDBACK"
-    FEEDBACK=""
-  fi
   echo 
   echo 
   echo "-------------------------------------------------------------------------------"
@@ -71,6 +61,7 @@ menu()
   echo
   echo "  20 / Restore PROD DB in local mysql"
   echo "  21 / Restore PROD images in local WEB environment"
+  echo "  22 / Restore PROD DB & images in local WEB environment"
   echo
   echo 
   echo "-------------------------------------------------------------------------------"
@@ -106,6 +97,9 @@ parsecommand() {
                 ;;
     '21')       RestoreProdImages
                 ;;    
+    '22')       RestoreProdImages
+                RestoreDB "PROD" "nointeractive"
+                ;;    
     '50')
                 getPRODDBcopy
                 ;;
@@ -120,7 +114,7 @@ parsecommand() {
     'x')        echo
                 exit 0
                 ;;    
-    *)          feedback "Unknown command"
+    *)          log "Unknown command"
                 ;;
   esac
   echo; ANSWER=`./ask.sh "Back to menu <CR> "`
@@ -130,10 +124,17 @@ parsecommand() {
 #---------------------------------------------------------------------------------------
 #   Restore PROD DB backup 
 #   $1 is the DB type : PROD or DEV
+#   $2 'noninteractive' means confirmation has been already done
 #---------------------------------------------------------------------------------------
 RestoreDB() {
   echo;echo
-  ANSWER=`./ask.sh "Proceed ? Y/N <CR> " "N"`
+  if [ -z $2 ]
+  then
+    ANSWER=`./ask.sh "Proceed to DB restore in local environment ? Y/N <CR> " "N"`
+  else
+    echo "Restoring PROD DB in local environment"
+    ANSWER='Y'
+  fi
   if [ `echo $ANSWER | tr A-Z a-z` == "y" ] 
   then
     DBFILE=""
@@ -183,10 +184,17 @@ EOF
 }
 #---------------------------------------------------------------------------------------
 #   Restore PROD images 
+#   $1 'noninteractive' means confirmation has been already done
 #---------------------------------------------------------------------------------------
 RestoreProdImages () {
   echo
-  ANSWER=`./ask.sh "Proceed ? Y/N <CR> " "N"`
+  if [ -z $1 ]
+  then
+    ANSWER=`./ask.sh "Proceed to images restore ? Y/N <CR> " "N"`
+  else
+    echo "Restoring PROD images in local environment"
+    ANSWER='Y'
+  fi
   if [ `echo $ANSWER | tr A-Z a-z` == "y" ] 
   then
     echo; ls -l $LOCALBACKUPDIR/*.gz; echo; echo
@@ -205,10 +213,10 @@ RestoreProdImages () {
     # Now proceed
     initdir=$(pwd)
     cd $LOCALWEBDIR/public
-    feedback "Restoring the PROD images in $LOCALWEBDIR/public/images"
+    log "Restoring the PROD images in $LOCALWEBDIR/public/images"
     tar xzvf $GZFILE
     cd $initdir
-    feedback "PROD images restored in local environment"
+    log "PROD images restored in local environment"
   fi
 }
 #---------------------------------------------------------------------------------------
@@ -216,7 +224,7 @@ RestoreProdImages () {
 #---------------------------------------------------------------------------------------
 getPRODFull() {
   echo;echo
-  ANSWER=`./ask.sh "Proceed ? Y/N <CR> " "N"`
+  ANSWER=`./ask.sh "Proceed to full PROD copy (images and DB) ? Y/N <CR> " "N"`
   if [ `echo $ANSWER | tr A-Z a-z` == "y" ] 
   then
     getPRODDBcopy "nointeractive"
@@ -232,7 +240,7 @@ getPRODImagescopy () {
   echo;echo
   if [ -z $1 ]
   then
-    ANSWER=`./ask.sh "Proceed ? Y/N <CR> " "N"`
+    ANSWER=`./ask.sh "Proceed to PROD images copy ? Y/N <CR> " "N"`
   else
     ANSWER='Y'
   fi
@@ -262,7 +270,7 @@ getPRODDBcopy () {
   echo;echo
   if [ -z $1 ]
   then
-    ANSWER=`./ask.sh "Proceed ? Y/N <CR> " "N"`
+    ANSWER=`./ask.sh "Proceed to PROD DB copy ? Y/N <CR> " "N"`
   else
     ANSWER='Y'
   fi
@@ -310,4 +318,4 @@ done
 echo ""
 echo ""
 echo ""
-feedback "Exit admin.sh for O2-Ratoon site"
+log "Exit admin.sh for O2-Ratoon site"
