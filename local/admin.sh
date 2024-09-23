@@ -164,10 +164,16 @@ pushDBToDEV() {
     log "Copy PROD DB backup to O2switch DEV"
     DATESIGNATURE=`date +"%Y-%m-%d"`
     scp $DBFILE $O2USER@$O2HOST:BACKUP/$DATESIGNATURE-FROM-LOCAL-DB.sql
+    log "Copy of PROD DB backup to O2switch DEV done: $DBFILE"
     ssh -x "$O2USER@$O2HOST" <<-EOF
-    ls -l ~/BACKUP/*FROM*.sql
+    ls -l ~/BACKUP/$DATESIGNATURE-FROM-LOCAL-DB.sql
+    mysql -u $SQLUSER --password=$SQLPASS $SQLDEVDB
+      set autocommit=0;
+      source ~/BACKUP/$DATESIGNATURE-FROM-LOCAL-DB.sql;
+      commit;
+      exit
 EOF
-    echo;log "Copy of PROD DB backup to O2switch DEV done: $DBFILE"
+    log "Restore of PROD DB backup to DEV DB done"
     cd $initdir
   fi
 }
@@ -206,7 +212,7 @@ pushImagesToDEV() {
     ssh -x "$O2USER@$O2HOST" <<-EOF
     ls -l ~/BACKUP/*FROM*.gz
     cd $DEV/public
-    tar tvf ~/BACKUP/$DATESIGNATURE-FROM-LOCAL-ALLIMAGES.tar.gz | less
+    tar xvf ~/BACKUP/$DATESIGNATURE-FROM-LOCAL-ALLIMAGES.tar.gz
 EOF
     echo;log "Copy of PROD images backup to O2switch DEV done: $GZFILE"
     cd $initdir
