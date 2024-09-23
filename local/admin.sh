@@ -3,7 +3,7 @@
 #---------------------------------------------------------------------------------------
 #   Params
 #---------------------------------------------------------------------------------------
-version="admin.sh, Sep 19 2024 : 1.25 "
+version="admin.sh, Sep 19 2024 : 1.27 "
 #---------------------------------------------------------------------------------------
 #   Some parameters
 #---------------------------------------------------------------------------------------
@@ -67,9 +67,13 @@ menu()
   echo "-------------------------------------------------------------------------------"
   echo " R E M O T E   A C T I O N S"
   echo "-------------------------------------------------------------------------------"
+  echo "  O2switch PROD to LOCAL"; echo
   echo "  50 / Get a copy of the PROD database"
   echo "  51 / Get a copy of all PROD images"
-  echo "  52 / Get a full copy of PROD site ( DB and images )"
+  echo "  52 / Get a full copy of PROD site ( DB and images )"; echo
+  echo "  LOCAL to O2switch DEV"; echo
+  echo "  60 / Copy local PROD images backup to DEV"
+  echo "  61 / Copy local PROD DB backup to DEV"
   echo
   echo "-------------------------------------------------------------------------------"
   echo " L O G S"
@@ -108,11 +112,15 @@ parsecommand() {
                 ;;
     '52')       getPRODFull
                 ;;
+    '60')       pushImagesToDEV
+                ;;
+    '61')       pushDBToDEV
+                ;;
     'log')      echo
                 less $O2LOGS
                 ;;    
-    'x')        echo
-                log "Exit admin.sh for O2-Ratoon site"
+    'x')        echo;echo "Latest actions";echo
+                tail -n 10 $O2LOGS
                 exit 0
                 ;;    
     *)          log "Unknown command"
@@ -122,6 +130,88 @@ parsecommand() {
 }
 #---------------------------------------------------------------------------------------
 #   S U B   R O U T I N E S
+#---------------------------------------------------------------------------------------
+#   Push PROD DB backup to O2switch DEV
+#   $1 'noninteractive' means confirmation has been already done
+#---------------------------------------------------------------------------------------
+pushDBToDEV() {
+  echo
+  if [ -z $1 ]
+  then
+    ANSWER=`./ask.sh "Proceed to copy PROD DB backup on O2switch DEV ? Y/N <CR> " "N"`
+  else
+    ANSWER='Y'
+  fi
+  if [ `echo $ANSWER | tr A-Z a-z` == "y" ] 
+  then
+    initdir=$(pwd)
+    DBFILE=""
+    TARGET=""
+    initdir=`pwd`
+    cd $LOCALBACKUPDIR
+    echo; ls -l *$1*.sql
+    while [ "$DBFILE" = "" ]
+    do
+      echo; DBFILE=`$LOCALPROCSDIR/ask.sh "Which sql file ? "`
+      if ! [ -f $DBFILE ]
+      then
+        echo "Please provide a valid file location "
+        echo $DBFILE
+        DBFILE=""
+      fi
+    done
+    # Now proceed
+    log "Copy PROD DB backup to O2switch DEV"
+    DATESIGNATURE=`date +"%Y-%m-%d"`
+    scp $DBFILE $O2USER@$O2HOST:BACKUP/$DATESIGNATURE-FROM-LOCAL-DB.sql
+    ssh -x "$O2USER@$O2HOST" <<-EOF
+    ls -l ~/BACKUP/*FROM*.sql
+EOF
+    echo;log "Copy of PROD DB backup to O2switch DEV done: $DBFILE"
+    cd $initdir
+  fi
+}
+#---------------------------------------------------------------------------------------
+#   Push PROD images backup to O2switch DEV
+#   $1 'noninteractive' means confirmation has been already done
+#---------------------------------------------------------------------------------------
+pushImagesToDEV() {
+  echo
+  if [ -z $1 ]
+  then
+    ANSWER=`./ask.sh "Proceed to copy local PROD images backup on O2switch DEV ? Y/N <CR> " "N"`
+  else
+    ANSWER='Y'
+  fi
+  if [ `echo $ANSWER | tr A-Z a-z` == "y" ] 
+  then
+    echo; ls -l $LOCALBACKUPDIR/*.gz; echo; echo
+    # Choose the compressed archive
+    GZFILE=""
+    while [ "$GZFILE" = "" ]
+    do
+      echo; GZFILE=`./ask.sh "Which archive file ? "`
+      if ! [ -f $GZFILE ]
+      then
+        echo "Please provide a valid file location "
+        echo $GZFILE
+        GZFILE=""
+      fi
+    done
+    # Now proceed
+    initdir=$(pwd)
+    log "Copy PROD images backup to O2switch DEV"
+    DATESIGNATURE=`date +"%Y-%m-%d"`
+    scp $GZFILE $O2USER@$O2HOST:BACKUP/$DATESIGNATURE-FROM-LOCAL-ALLIMAGES.tar.gz
+    ssh -x "$O2USER@$O2HOST" <<-EOF
+    ls -l ~/BACKUP/*FROM*.gz
+    cd $DEV/public
+    tar tvf ~/BACKUP/$DATESIGNATURE-FROM-LOCAL-ALLIMAGES.tar.gz | less
+EOF
+    echo;log "Copy of PROD images backup to O2switch DEV done: $GZFILE"
+    cd $initdir
+  fi
+}
 #---------------------------------------------------------------------------------------
 #   Restore PROD DB backup 
 #   $1 is the DB type : PROD or DEV
