@@ -112,6 +112,7 @@ parsecommand() {
                 less $O2LOGS
                 ;;    
     'x')        echo
+                log "Exit admin.sh for O2-Ratoon site"
                 exit 0
                 ;;    
     *)          log "Unknown command"
@@ -312,10 +313,3 @@ do
     parsecommand $ANSWER
   fi
 done
-#---------------------------------------------------------------------------------------
-#   Summary 
-#---------------------------------------------------------------------------------------
-echo ""
-echo ""
-echo ""
-log "Exit admin.sh for O2-Ratoon site"
