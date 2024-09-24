@@ -3,7 +3,7 @@
 #---------------------------------------------------------------------------------------
 #   Params
 #---------------------------------------------------------------------------------------
-version="admin.sh, Sep 19 2024 : 1.27 "
+version="admin.sh, Sep 24 2024 : 1.29 "
 #---------------------------------------------------------------------------------------
 #   Some parameters
 #---------------------------------------------------------------------------------------
@@ -74,6 +74,7 @@ menu()
   echo "  LOCAL to O2switch DEV"; echo
   echo "  60 / Copy local PROD images backup to DEV"
   echo "  61 / Copy local PROD DB backup to DEV"
+  echo "  62 / Push full local DEV to O2switch DEDV "
   echo
   echo "-------------------------------------------------------------------------------"
   echo " L O G S"
@@ -101,8 +102,7 @@ parsecommand() {
                 ;;
     '21')       RestoreProdImages
                 ;;    
-    '22')       RestoreProdImages
-                RestoreDB "PROD" "nointeractive"
+    '22')       RestoreFullPROD
                 ;;    
     '50')
                 getPRODDBcopy
@@ -115,6 +115,8 @@ parsecommand() {
     '60')       pushImagesToDEV
                 ;;
     '61')       pushDBToDEV
+                ;;
+    '62')       pushFullDev
                 ;;
     'log')      echo
                 less $O2LOGS
@@ -149,7 +151,7 @@ pushDBToDEV() {
     TARGET=""
     initdir=`pwd`
     cd $LOCALBACKUPDIR
-    echo; ls -l *$1*.sql
+    echo; ls -l *PROD*.sql
     while [ "$DBFILE" = "" ]
     do
       echo; DBFILE=`$LOCALPROCSDIR/ask.sh "Which sql file ? "`
@@ -314,6 +316,30 @@ RestoreProdImages () {
     tar xzvf $GZFILE
     cd $initdir
     log "PROD images restored in local environment"
+  fi
+}
+#---------------------------------------------------------------------------------------
+#   Push local dev environment to o2 
+#---------------------------------------------------------------------------------------
+pushFullDev() {
+  echo;echo
+  ANSWER=`./ask.sh "Proceed to Push local dev environment to o2 ? Y/N <CR> " "N"`
+  if [ `echo $ANSWER | tr A-Z a-z` == "y" ] 
+  then
+    pushImagesToDEV "nointeractive"  
+    pushDBToDEV "nointeractive"  
+  fi
+}
+#---------------------------------------------------------------------------------------
+#   Get full PROD 
+#---------------------------------------------------------------------------------------
+RestoreFullPROD() {
+  echo;echo
+  ANSWER=`./ask.sh "Proceed to restore full PROD locally ? Y/N <CR> " "N"`
+  if [ `echo $ANSWER | tr A-Z a-z` == "y" ] 
+  then
+    RestoreProdImages "nointeractive"
+    RestoreDB "PROD" "nointeractive" 
   fi
 }
 #---------------------------------------------------------------------------------------
