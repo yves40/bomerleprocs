@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html>
+<body>
+
+<h2>Sampe code for B1 exercise</h2>
+
+<p>Find the longest chain in an array.</p>
+
+<p id="longestchain"></p>
+
+<script>
+
+  const allstrings = [ "One", "two", "Three", "Four", "Benjamin", 'Yves', 'Isabelle is a very good teacher',
+                          "But Yves is a disaster ! No teaching competencies at all !!!!"];
+  let latest = 0;
+
+  document.getElementById("longestchain").innerHTML = allstrings.reduce(getMax);
+
+  /*
+    Le reduce permet de scanner un tableau et de renvoyer un élément 
+    sur la base de ton critère de filtrage
+    Ce que tu renvoies à chaque appel pour un élément, ici "thestring" 
+    est passé automatiquement lors de l'appel suivant à travers "longest"
+  */
+  function getMax(longest, thestring) {
+  if (thestring.length > longest.length) {
+    return thestring;
+  }
+  else {
+    return longest;
+  }
+}
+</script>
+
+</body>
+</html>
