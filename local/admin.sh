@@ -3,7 +3,7 @@
 #---------------------------------------------------------------------------------------
 #   Params
 #---------------------------------------------------------------------------------------
-version="admin.sh, Sep 24 2024 : 1.29 "
+version="admin.sh, Sep 26 2024 : 1.30 "
 #---------------------------------------------------------------------------------------
 #   Some parameters
 #---------------------------------------------------------------------------------------
@@ -74,7 +74,7 @@ menu()
   echo "  LOCAL to O2switch DEV"; echo
   echo "  60 / Copy local PROD images backup to DEV"
   echo "  61 / Copy local PROD DB backup to DEV"
-  echo "  62 / Push full local DEV to O2switch DEDV "
+  echo "  62 / Push full local DEV to O2switch DEV"
   echo
   echo "-------------------------------------------------------------------------------"
   echo " L O G S"
@@ -167,6 +167,7 @@ pushDBToDEV() {
     DATESIGNATURE=`date +"%Y-%m-%d"`
     scp $DBFILE $O2USER@$O2HOST:BACKUP/$DATESIGNATURE-FROM-LOCAL-DB.sql
     log "Copy of PROD DB backup to O2switch DEV done: $DBFILE"
+    log "Restore of PROD DB backup to DEV DB"
     ssh -x "$O2USER@$O2HOST" <<-EOF
     ls -l ~/BACKUP/$DATESIGNATURE-FROM-LOCAL-DB.sql
     mysql -u $SQLUSER --password=$SQLPASS $SQLDEVDB
@@ -211,12 +212,14 @@ pushImagesToDEV() {
     log "Copy PROD images backup to O2switch DEV"
     DATESIGNATURE=`date +"%Y-%m-%d"`
     scp $GZFILE $O2USER@$O2HOST:BACKUP/$DATESIGNATURE-FROM-LOCAL-ALLIMAGES.tar.gz
+    log "Copy PROD images backup to O2switch DEV: Done"
+    log "Copy of PROD images backup to O2switch DEV"
     ssh -x "$O2USER@$O2HOST" <<-EOF
     ls -l ~/BACKUP/*FROM*.gz
     cd $DEV/public
     tar xvf ~/BACKUP/$DATESIGNATURE-FROM-LOCAL-ALLIMAGES.tar.gz
 EOF
-    echo;log "Copy of PROD images backup to O2switch DEV done: $GZFILE"
+    echo;log "Copy of PROD images backup to O2switch DEV: done: $GZFILE"
     cd $initdir
   fi
 }
