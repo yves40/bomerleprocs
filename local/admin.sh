@@ -3,7 +3,7 @@
 #---------------------------------------------------------------------------------------
 #   Params
 #---------------------------------------------------------------------------------------
-version="admin.sh, Sep 27 2024 : 1.31 "
+version="admin.sh, Sep 27 2024 : 1.32 "
 #---------------------------------------------------------------------------------------
 #   Some parameters
 #---------------------------------------------------------------------------------------
@@ -132,6 +132,43 @@ parsecommand() {
 }
 #---------------------------------------------------------------------------------------
 #   S U B   R O U T I N E S
+#---------------------------------------------------------------------------------------
+#   Push local dev environment to o2 
+#---------------------------------------------------------------------------------------
+pushFullDev() {
+  echo;echo
+  ANSWER=`./ask.sh "Proceed to Push local dev environment to o2 ? Y/N <CR> " "N"`
+  if [ `echo $ANSWER | tr A-Z a-z` == "y" ] 
+  then
+    pushImagesToDEV "nointeractive"  
+    pushDBToDEV "nointeractive"  
+  fi
+}
+#---------------------------------------------------------------------------------------
+#   Get full PROD 
+#---------------------------------------------------------------------------------------
+RestoreFullPROD() {
+  echo;echo
+  ANSWER=`./ask.sh "Proceed to restore full PROD locally ? Y/N <CR> " "N"`
+  if [ `echo $ANSWER | tr A-Z a-z` == "y" ] 
+  then
+    RestoreProdImages "nointeractive"
+    RestoreDB "PROD" "nointeractive" 
+  fi
+}
+#---------------------------------------------------------------------------------------
+#   Get Full PROD site copy 
+#---------------------------------------------------------------------------------------
+getPRODFull() {
+  echo;echo
+  ANSWER=`./ask.sh "Proceed to full PROD copy (images and DB) ? Y/N <CR> " "N"`
+  if [ `echo $ANSWER | tr A-Z a-z` == "y" ] 
+  then
+    getPRODDBcopy "nointeractive"
+    getPRODImagescopy "nointeractive"
+    echo; ls -l $LOCALBACKUPDIR/*PROD*;echo
+  fi
+}
 #---------------------------------------------------------------------------------------
 #   Push PROD DB backup to O2switch DEV
 #   $1 'noninteractive' means confirmation has been already done
@@ -274,12 +311,14 @@ RestoreDB() {
     echo
     echo
     echo "Restore now : $DBFILE"
+    log "LOCAL: Restore a PROD DB backup locally"
     mysql --user=$MSQLUSER --password=$MSQLPASSWORD $TARGET  << EOF
       set autocommit=0;
       source $DBFILE ;
       commit;
       exit
 EOF
+    log "LOCAL: Restore a PROD DB backup locally: Done"
     #rm todelete.sh
     export LOCALTARGETDB="$TARGET"
     cd $initdir
@@ -323,43 +362,6 @@ RestoreProdImages () {
   fi
 }
 #---------------------------------------------------------------------------------------
-#   Push local dev environment to o2 
-#---------------------------------------------------------------------------------------
-pushFullDev() {
-  echo;echo
-  ANSWER=`./ask.sh "Proceed to Push local dev environment to o2 ? Y/N <CR> " "N"`
-  if [ `echo $ANSWER | tr A-Z a-z` == "y" ] 
-  then
-    pushImagesToDEV "nointeractive"  
-    pushDBToDEV "nointeractive"  
-  fi
-}
-#---------------------------------------------------------------------------------------
-#   Get full PROD 
-#---------------------------------------------------------------------------------------
-RestoreFullPROD() {
-  echo;echo
-  ANSWER=`./ask.sh "Proceed to restore full PROD locally ? Y/N <CR> " "N"`
-  if [ `echo $ANSWER | tr A-Z a-z` == "y" ] 
-  then
-    RestoreProdImages "nointeractive"
-    RestoreDB "PROD" "nointeractive" 
-  fi
-}
-#---------------------------------------------------------------------------------------
-#   Get Full PROD site copy 
-#---------------------------------------------------------------------------------------
-getPRODFull() {
-  echo;echo
-  ANSWER=`./ask.sh "Proceed to full PROD copy (images and DB) ? Y/N <CR> " "N"`
-  if [ `echo $ANSWER | tr A-Z a-z` == "y" ] 
-  then
-    getPRODDBcopy "nointeractive"
-    getPRODImagescopy "nointeractive"
-    echo; ls -l $LOCALBACKUPDIR/*PROD*;echo
-  fi
-}
-#---------------------------------------------------------------------------------------
 #   Get PROD images 
 #   $1 'noninteractive' means confirmation has been already done
 #---------------------------------------------------------------------------------------
@@ -373,6 +375,7 @@ getPRODImagescopy () {
   fi
   if [ `echo $ANSWER | tr A-Z a-z` == "y" ] 
   then
+    log "ONSWITCH: Get a copy of PROD images. Build the tar file"
     ssh -x "$O2USER@$O2HOST" <<-EOF
       echo;echo;echo "File root will be : $DATESIGNATURE"
       DATESIGNATURE=`date +"%Y-%m-%d"`
@@ -386,7 +389,10 @@ getPRODImagescopy () {
       tar czvf ~/BACKUP/$DATESIGNATURE-PROD-ALLIMAGES.tar.gz images
       cd $initdir
 EOF
+    log "ONSWITCH: Get a copy of PROD images. Build the tar file: Done"
+    log "LOCAL: Copy PROD images tar file locally"
     scp $O2USER@$O2HOST:BACKUP/$DATESIGNATURE-PROD-ALLIMAGES.tar.gz ~/bomerleprocs/backups
+    log "LOCAL: Copy PROD images tar file locally: Done"
   fi
 }
 #---------------------------------------------------------------------------------------
@@ -403,6 +409,7 @@ getPRODDBcopy () {
   fi
   if [ `echo $ANSWER | tr A-Z a-z` == "y" ] 
   then
+    log "ONSWITCH: Get a copy of PROD DB. Build the SQL file"
     ssh -x "$O2USER@$O2HOST" <<-EOF
       echo;echo;echo "File root will be : $DATESIGNATURE"
       echo; ls -l ~/BACKUP
@@ -414,7 +421,10 @@ getPRODDBcopy () {
       echo;echo "Connect as $SQLUSER on $SQLPRODDB";echo
       mysqldump -u $SQLUSER --password=$SQLPASS --result-file=BACKUP/$DATESIGNATURE-$SQLPRODDB.sql $SQLPRODDB
 EOF
+    log "ONSWITCH: Get a copy of PROD DB. Build the SQL file: Done"
+    log "LOCAL: Copy PROD DB sql file locally"
     scp $O2USER@$O2HOST:BACKUP/$DATESIGNATURE-$SQLPRODDB.sql ~/bomerleprocs/backups
+    log "LOCAL: Copy PROD DB sql file locally: Done"
   fi
 }
 #---------------------------------------------------------------------------------------
