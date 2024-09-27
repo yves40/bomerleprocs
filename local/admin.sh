@@ -3,18 +3,12 @@
 #---------------------------------------------------------------------------------------
 #   Params
 #---------------------------------------------------------------------------------------
-version="admin.sh, Sep 27 2024 : 1.32 "
+version="admin.sh, Sep 27 2024 : 1.38 "
 #---------------------------------------------------------------------------------------
 #   Some parameters
 #---------------------------------------------------------------------------------------
-LOCALTARGETDB="$LOCALTARGETDB"  # Get it from parent shell
-LOCALWEBDIR="$HOME/bomerleprod"
-LOCALBACKUPDIR="$HOME/bomerleprocs/backups"
-LOCALPROCSDIR="$HOME/bomerleprocs/local"
 lastcommand=""
 DATESIGNATURE=`date +"%Y-%m-%d"`
-PROD=PROD/bomerle
-DEV=DEV/bomerle
 #---------------------------------------------------------------------------------------
 #   Running under cygwin ?
 #---------------------------------------------------------------------------------------
@@ -25,10 +19,10 @@ then
         alias clear='cmd /c cls'
     fi
 fi
-if [ ! -f $O2LOGS ]
+if [ ! -f $LOCALO2LOGS ]
 then
-  touch $O2LOGS
-  log "ADMIN: Log file initialized for Ratoon admin"
+  touch $LOCALO2LOGS
+  log "ADMIN: Log file $LOCALO2LOGS initialized for Ratoon admin"
 fi
 #---------------------------------------------------------------------------------------
 #   Some utility routine
@@ -37,7 +31,7 @@ fi
 #---------------------------------------------------------------------------------------
 log() 
 {
-        echo "`date` : $version $1" >> $O2LOGS
+        echo "`date` : $version $1" >> $LOCALO2LOGS
         echo "`date` : $1"
 }
 #---------------------------------------------------------------------------------------
@@ -119,10 +113,10 @@ parsecommand() {
     '62')       pushFullDev
                 ;;
     'log')      echo
-                less $O2LOGS
+                less $LOCALO2LOGS
                 ;;    
     'x')        echo;echo "Latest actions";echo
-                tail -n 10 $O2LOGS
+                tail -n 10 $LOCALO2LOGS
                 exit 0
                 ;;    
     *)          log "ERR: Unknown command"
@@ -207,7 +201,7 @@ pushDBToDEV() {
     log "ONSWITCH: Restore of PROD DB backup to DEV DB"
     ssh -x "$O2USER@$O2HOST" <<-EOF
     ls -l ~/BACKUP/$DATESIGNATURE-FROM-LOCAL-DB.sql
-    mysql -u $SQLUSER --password=$SQLPASS $SQLDEVDB
+    mysql -u $SQLUSER --password=$SQLPASS $REMOTESQLDEVDB
       set autocommit=0;
       source ~/BACKUP/$DATESIGNATURE-FROM-LOCAL-DB.sql;
       commit;
@@ -253,7 +247,7 @@ pushImagesToDEV() {
     log "ONSWITCH: Extract PROD images on O2switch DEV"
     ssh -x "$O2USER@$O2HOST" <<-EOF
     ls -l ~/BACKUP/*FROM*.gz
-    cd $DEV/public
+    cd $REMOTEDEV/public
     tar xvf ~/BACKUP/$DATESIGNATURE-FROM-LOCAL-ALLIMAGES.tar.gz
 EOF
     echo;
@@ -312,7 +306,7 @@ RestoreDB() {
     echo
     echo "Restore now : $DBFILE"
     log "LOCAL: Restore a PROD DB backup locally"
-    mysql --user=$MSQLUSER --password=$MSQLPASSWORD $TARGET  << EOF
+    mysql --user=$LOCALMSQLUSER --password=$LOCALMSQLPASSWORD $TARGET  << EOF
       set autocommit=0;
       source $DBFILE ;
       commit;
@@ -385,7 +379,7 @@ getPRODImagescopy () {
       fi
       echo;echo "Backup all PROD images";echo
       initdir=$(pwd)
-      cd $PROD/public
+      cd $REMOTEPROD/public
       tar czvf ~/BACKUP/$DATESIGNATURE-PROD-ALLIMAGES.tar.gz images
       cd $initdir
 EOF
@@ -419,12 +413,82 @@ getPRODDBcopy () {
         rm BACKUP/$DATESIGNATURE-toba3789_PRODbomerle.sql
       fi
       echo;echo "Connect as $SQLUSER on $SQLPRODDB";echo
-      mysqldump -u $SQLUSER --password=$SQLPASS --result-file=BACKUP/$DATESIGNATURE-$SQLPRODDB.sql $SQLPRODDB
+      mysqldump -u $REMOTESQLUSER --password=$REMOTESQLPASS --result-file=BACKUP/$DATESIGNATURE-$REMOTESQLPRODDB.sql $REMOTESQLPRODDB
 EOF
     log "ONSWITCH: Get a copy of PROD DB. Build the SQL file: Done"
     log "LOCAL: Copy PROD DB sql file locally"
-    scp $O2USER@$O2HOST:BACKUP/$DATESIGNATURE-$SQLPRODDB.sql ~/bomerleprocs/backups
+    scp $O2USER@$O2HOST:BACKUP/$DATESIGNATURE-$REMOTESQLPRODDB.sql ~/bomerleprocs/backups
     log "LOCAL: Copy PROD DB sql file locally: Done"
+  fi
+}
+#---------------------------------------------------------------------------------------
+#   C H E C K   A L L   R E Q U I R E D   V A R I A B L E S    A R E    S E T 
+#---------------------------------------------------------------------------------------
+checkEnvironmentVariables()
+{
+  log 'ADMIN: Check environment variables'
+  log 'ADMIN: These variables must be set in your .bashrc file'
+  if [ -z $LOCALTARGETDB ]; then
+    log "ERR: \$LOCALTARGETDB not set"
+    log "INF: Set it to the default mysql DB which will be used"
+    exit 1
+  fi
+  if [ -z $LOCALWEBDIR ]; then
+    log "ERR: \$LOCALWEBDIR not set"
+    log "INF: Set it to the location of your web project."
+    log "INF: For example, \$HOME/bomerleprocs"
+    exit 1
+  fi
+  if [ -z $LOCALBACKUPDIR]; then
+    log "ERR: \$LOCALBACKUPDIR not set"
+    log "INF: Set it to the location of your backup files."
+    log "INF: For example, \$HOME/bomerleprocs/backups"
+    exit 1
+  fi
+  if [ -z $LOCALPROCSDIR ]; then
+    log "ERR: \$LOCALPROCSDIR not set"
+    log "INF: Set it to the location of the admin shell script."
+    log "INF: For example, \$HOME/bomerleprocs/local"
+    exit 1
+  fi
+  if [ -z $LOCALO2LOGS ]; then
+    log "ERR: \$LOCALO2LOGS not set"
+    log "INF: Set it to the location of complete path of the admin log file."
+    log "INF: For example, /tmp/O2ratoon-admin.log"
+    exit 1
+  fi
+  if [ -z $REMOTEPROD ]; then
+    log "ERR: \$REMOTEPROD not set"
+    log "INF: Set it to the location of the PROD environment ON THE REMOTE SYSTEM."
+    log "INF: For example, PROD/bomerle"
+    exit 1
+  fi
+  if [ -z $REMOTEDEV ]; then
+    log "ERR: \$REMOTEDEV not set"
+    log "INF: Set it to the location of the DEV environment ON THE REMOTE SYSTEM."
+    log "INF: For example, DEV/bomerle"
+    exit 1
+  fi
+  # Now some MYSQL env
+  if [ -z $LOCALMSQLUSER ]; then
+    log "ERR: \$SQLUSER not set"
+    log "INF: Set it to user ID managing the local mysql DB."
+    exit 1
+  fi
+  if [ -z $LOCALMSQLPASSWORD ]; then
+    log "ERR: \$SQLPASS not set"
+    log "INF: Set it to user password managing the mysql DB."
+    exit 1
+  fi
+  if [ -z $REMOTESQLPRODDB ]; then
+    log "ERR: \$REMOTESQLPRODDB not set"
+    log "INF: Set it to DB name for production data."
+    exit 1
+  fi
+  if [ -z $REMOTESQLDEVDB ]; then
+    log "ERR: \$REMOTESQLDEVDB not set"
+    log "INF: Set it to DB name for development data."
+    exit 1
   fi
 }
 #---------------------------------------------------------------------------------------
@@ -434,6 +498,7 @@ clear
 echo ""
 echo "$version"
 echo ""
+checkEnvironmentVariables
 #---------------------------------------------------------------------------------------
 #   menu input
 #---------------------------------------------------------------------------------------
