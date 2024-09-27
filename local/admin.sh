@@ -3,7 +3,7 @@
 #---------------------------------------------------------------------------------------
 #   Params
 #---------------------------------------------------------------------------------------
-version="admin.sh, Sep 26 2024 : 1.30 "
+version="admin.sh, Sep 27 2024 : 1.31 "
 #---------------------------------------------------------------------------------------
 #   Some parameters
 #---------------------------------------------------------------------------------------
@@ -28,7 +28,7 @@ fi
 if [ ! -f $O2LOGS ]
 then
   touch $O2LOGS
-  log "Log file initialized for Ratoon admin"
+  log "ADMIN: Log file initialized for Ratoon admin"
 fi
 #---------------------------------------------------------------------------------------
 #   Some utility routine
@@ -125,7 +125,7 @@ parsecommand() {
                 tail -n 10 $O2LOGS
                 exit 0
                 ;;    
-    *)          log "Unknown command"
+    *)          log "ERR: Unknown command"
                 ;;
   esac
   echo; ANSWER=`./ask.sh "Back to menu <CR> "`
@@ -163,11 +163,11 @@ pushDBToDEV() {
       fi
     done
     # Now proceed
-    log "Copy PROD DB backup to O2switch DEV"
+    log "TOSWITCH: Copy PROD DB backup to O2switch DEV"
     DATESIGNATURE=`date +"%Y-%m-%d"`
     scp $DBFILE $O2USER@$O2HOST:BACKUP/$DATESIGNATURE-FROM-LOCAL-DB.sql
-    log "Copy of PROD DB backup to O2switch DEV done: $DBFILE"
-    log "Restore of PROD DB backup to DEV DB"
+    log "TOSWITCH: Copy of PROD DB backup to O2switch DEV done: $DBFILE"
+    log "ONSWITCH: Restore of PROD DB backup to DEV DB"
     ssh -x "$O2USER@$O2HOST" <<-EOF
     ls -l ~/BACKUP/$DATESIGNATURE-FROM-LOCAL-DB.sql
     mysql -u $SQLUSER --password=$SQLPASS $SQLDEVDB
@@ -176,7 +176,7 @@ pushDBToDEV() {
       commit;
       exit
 EOF
-    log "Restore of PROD DB backup to DEV DB done"
+    log "ONSWITCH: Restore of PROD DB backup to DEV DB: Done"
     cd $initdir
   fi
 }
@@ -209,17 +209,18 @@ pushImagesToDEV() {
     done
     # Now proceed
     initdir=$(pwd)
-    log "Copy PROD images backup to O2switch DEV"
+    log "TOSWITCH: Copy PROD images backup to O2switch DEV"
     DATESIGNATURE=`date +"%Y-%m-%d"`
     scp $GZFILE $O2USER@$O2HOST:BACKUP/$DATESIGNATURE-FROM-LOCAL-ALLIMAGES.tar.gz
-    log "Copy PROD images backup to O2switch DEV: Done"
-    log "Copy of PROD images backup to O2switch DEV"
+    log "TOSWITCH: Copy PROD images backup to O2switch DEV: Done"
+    log "ONSWITCH: Extract PROD images on O2switch DEV"
     ssh -x "$O2USER@$O2HOST" <<-EOF
     ls -l ~/BACKUP/*FROM*.gz
     cd $DEV/public
     tar xvf ~/BACKUP/$DATESIGNATURE-FROM-LOCAL-ALLIMAGES.tar.gz
 EOF
-    echo;log "Copy of PROD images backup to O2switch DEV: done: $GZFILE"
+    echo;
+    log "ONSWITCH: Extract PROD images on O2switch DEV: Done: $GZFILE"
     cd $initdir
   fi
 }
@@ -315,10 +316,10 @@ RestoreProdImages () {
     # Now proceed
     initdir=$(pwd)
     cd $LOCALWEBDIR/public
-    log "Restoring the PROD images in $LOCALWEBDIR/public/images"
+    log "LOCAL: Restoring the PROD images in $LOCALWEBDIR/public/images"
     tar xzvf $GZFILE
     cd $initdir
-    log "PROD images restored in local environment"
+    log "LOCAL: Restoring the PROD images: Done"
   fi
 }
 #---------------------------------------------------------------------------------------
