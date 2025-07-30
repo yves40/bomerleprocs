@@ -3,7 +3,7 @@
 #---------------------------------------------------------------------------------------
 #   Params
 #---------------------------------------------------------------------------------------
-version="admin.sh, Nov 21 2024 : 1.39 "
+version="admin.sh, Jul 30 2024 : 1.40 "
 #---------------------------------------------------------------------------------------
 #   Some parameters
 #---------------------------------------------------------------------------------------
@@ -201,7 +201,7 @@ pushDBToDEV() {
     log "ONSWITCH: Restore of PROD DB backup to DEV DB"
     ssh -x "$O2USER@$O2HOST" <<-EOF
     ls -l ~/BACKUP/$DATESIGNATURE-FROM-LOCAL-DB.sql
-    mysql -u $SQLUSER --password=$SQLPASS $REMOTESQLDEVDB
+    mysql -u $REMOTESQLUSER --password=$REMOTESQLPASS $REMOTESQLDEVDB
       set autocommit=0;
       source ~/BACKUP/$DATESIGNATURE-FROM-LOCAL-DB.sql;
       commit;
@@ -412,7 +412,7 @@ getPRODDBcopy () {
       then
         rm BACKUP/$DATESIGNATURE-toba3789_PRODbomerle.sql
       fi
-      echo;echo "Connect as $SQLUSER on $SQLPRODDB";echo
+      echo;echo "Connect as $SQLUSER on $REMOTESQLPRODDB";echo
       mysqldump -u $REMOTESQLUSER --password=$REMOTESQLPASS --result-file=BACKUP/$DATESIGNATURE-$REMOTESQLPRODDB.sql $REMOTESQLPRODDB
 EOF
     log "ONSWITCH: Get a copy of PROD DB. Build the SQL file: Done"
